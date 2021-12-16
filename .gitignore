@@ -39,6 +39,7 @@ parts/
 sdist/
 var/
 logs/
+runs/
 wheels/
 *.egg-info/
 .installed.cfg

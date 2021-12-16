@@ -26,8 +26,8 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     train_dataset = ToTorchDataset(train_data)
     test_dataset = ToTorchDataset(test_data)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=16)
-    test_dataloader = DataLoader(test_dataset, batch_size=16)
+    train_dataloader = DataLoader(train_dataset, batch_size=64)
+    test_dataloader = DataLoader(test_dataset, batch_size=64)
 
     lr = 0.001
     epochs = 100
@@ -35,7 +35,7 @@ for density in [0.05, 0.1, 0.15, 0.2]:
 
     dim = 8
 
-    mlp = MLPModel(loss_fn, rt_data.row_n, rt_data.col_n, dim=8)
+    mlp = MLPModel(loss_fn, rt_data.row_n, rt_data.col_n, dim=12)
     opt = Adam(mlp.parameters(), lr=lr)
 
     mlp.fit(train_dataloader,epochs,opt,eval_loader=test_dataloader)

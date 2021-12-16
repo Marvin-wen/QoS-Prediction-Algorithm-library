@@ -4,11 +4,9 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 class ModelBase(object):
-    def __init__(self, model, loss_fn, use_gpu=True) -> None:
+    def __init__(self, loss_fn) -> None:
         super().__init__()
-        self.model = model
         self.loss_fn = loss_fn
-        self.device = ("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
         self.tb = SummaryWriter()
 
     def fit(self, train_loader, epochs, optimizer, eval_=True, eval_loader=None):

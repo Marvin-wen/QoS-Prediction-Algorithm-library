@@ -1,3 +1,4 @@
+from collections import UserDict
 import torch
 from torch import nn
 from models.base import ModelBase
@@ -42,9 +43,12 @@ class MLP(nn.Module):
 
 
 class MLPModel(ModelBase):
-    def __init__(self, loss_fn, n_user, n_item, dim, layers=[32, 16, 8], output_dim=1) -> None:
+    def __init__(self, loss_fn, n_user, n_item, dim, layers=[32, 16, 8], output_dim=1,use_gpu=True) -> None:
         self.model = MLP(n_user, n_item, dim, layers=layers, output_dim=output_dim)
-        super().__init__(self.model, loss_fn)
+        self.device = ("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
+        if use_gpu:
+            self.model.to(self.device) 
+        super().__init__(loss_fn)
     
     def parameters(self):
         return self.model.parameters()

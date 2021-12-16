@@ -1,7 +1,7 @@
 import torch
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
-
+from utils.model_util import save_checkpoint,load_checkpoint
 
 class ModelBase(object):
     def __init__(self, loss_fn) -> None:
@@ -9,10 +9,12 @@ class ModelBase(object):
         self.loss_fn = loss_fn
         self.tb = SummaryWriter()
 
-    def fit(self, train_loader, epochs, optimizer, eval_=True, eval_loader=None):
+    def fit(self, train_loader, epochs, optimizer, eval_=True, eval_loader=None, save_model=True, model_name="model_checkpoint.ckpt",max_keep=10):
         self.model.train()
         train_loss_list = []
         eval_loss_list = []
+        best_loss = None
+        is_best = False
         self.optimizer = optimizer
         for epoch in tqdm(range(epochs)):
             train_batch_loss = 0
@@ -36,23 +38,57 @@ class ModelBase(object):
                 f"Training Epoch:[{epoch}/{epochs}] Loss:{loss_per_epoch:.4f}")
             self.tb.add_scalar("Training Loss", loss_per_epoch, epoch)
 
-            if eval_ and (epoch + 1) % 10 == 0:
-                assert eval_loader is not None, "Please offer eval dataloader"
-                self.model.eval()
-                with torch.no_grad():
-                    for batch_id, batch in tqdm(enumerate(eval_loader)):
-                        user, item, rating = batch[0].to(self.device), batch[1].to(self.device), batch[2].to(self.device)
-                        y_pred = self.model(user, item)
-                        y_real = rating.reshape(-1, 1)
-                        loss = self.loss_fn(y_pred, y_real)
-                        eval_total_loss += loss.item()
-                    loss_per_epoch = eval_total_loss/len(eval_loader)
-                    eval_loss_list.append(loss_per_epoch)
-                    print(f"Test loss:", loss_per_epoch)
-                    self.tb.add_scalar("Eval loss", loss_per_epoch, epoch)
+            if  (epoch + 1) % 10 == 0:
+                if eval_ == True:
+                    assert eval_loader is not None, "Please offer eval dataloader"
+                    self.model.eval()
+                    with torch.no_grad():
+                        for batch_id, batch in tqdm(enumerate(eval_loader)):
+                            user, item, rating = batch[0].to(self.device), batch[1].to(self.device), batch[2].to(self.device)
+                            y_pred = self.model(user, item)
+                            y_real = rating.reshape(-1, 1)
+                            loss = self.loss_fn(y_pred, y_real)
+                            print(loss,batch_id)
+                            eval_total_loss += loss.item()
+                        loss_per_epoch = eval_total_loss/len(eval_loader)
+                        if best_loss is None:
+                            best_loss = loss_per_epoch
+                        elif loss_per_epoch < best_loss:
+                            best_loss = loss_per_epoch
+                            is_best = True
+                        else:
+                            is_best = False
+                        eval_loss_list.append(loss_per_epoch)
+                        print(f"Test loss:", loss_per_epoch)
+                        self.tb.add_scalar("Eval loss", loss_per_epoch, epoch)
 
-    def predict(self):
-        ...
+                if save_model == True:
+                    ckpt = {
+                        "model":self.model.state_dict(),
+                        "epoch":epoch,
+                        "optim":optimizer.state_dict()
+                    }
+                    save_checkpoint(ckpt,model_name,max_keep=max_keep,is_best=is_best)
+
+    def predict(self,test_loader,resume=False,path=None,map_location=None,load_best=False):
+        y_pred_list = []
+        y_list = []
+        if resume:
+            ckpt = load_checkpoint(path,map_location,load_best)
+            self.model.load_state_dict(ckpt['model'])
+            self.optimizer.load_state_dict(ckpt["optim"])
+            print("last checkpoint restored")
+        
+        self.model.eval()
+        with torch.no_grad():
+            for batch_id, batch in tqdm(enumerate(test_loader)):
+                user, item, rating = batch[0].to(self.device), batch[1].to(self.device), batch[2].to(self.device)
+                y_pred = self.model(user, item)
+                y_real = rating.reshape(-1, 1)
+                y_pred_list.append(y_pred)
+                y_list.append(y_real)
+        return y_real,y_pred_list
+
 
 
 class MemoryBase(object):

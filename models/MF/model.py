@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 from tqdm import tqdm
 from utils.evaluation import mse,mae,rmse
@@ -27,8 +28,8 @@ class MFModel(object):
         
         for epoch in tqdm(range(epochs),desc="MF Training Epoch"):
 
-            tmp_user_vector = self.user_vec
-            tmp_item_vector = self.item_vec
+            tmp_user_vec = copy.deepcopy(self.user_vec)
+            tmp_item_vec = copy.deepcopy(self.item_vec)
 
             for row in traid:
                 user_idx,item_idx,y = int(row[0]),int(row[1]),float(row[2])
@@ -39,8 +40,8 @@ class MFModel(object):
                 self.user_vec[user_idx] -= self.lr * user_grad
                 self.item_vec[item_idx] -= self.lr * item_grad
 
-            if early_stop and np.mean(np.abs(self.user_vector - tmp_user_vector)) < 1e-4 and \
-                np.mean(np.abs(self.item_vector - tmp_item_vector)) < 1e-4:
+            if early_stop and np.mean(np.abs(self.user_vec - tmp_user_vec)) < 1e-4 and \
+                np.mean(np.abs(self.item_vec - tmp_item_vec)) < 1e-4:
                     print('Converged')
                     break
 

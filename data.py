@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import random
-
+from tqdm import tqdm
 from scipy.sparse.construct import rand
 from const import *
 from copy import deepcopy
@@ -42,6 +42,42 @@ class DatasetBase(object):
         elif self.type == "service":
             data =  pd.read_csv(WS_DIR,sep="\t")
         return data
+
+class InfoDataset(DatasetBase):
+    def __init__(self, type_, enabled_columns:list) -> None:
+        self.type = type_
+        super().__init__(type_)
+        assert self.type in ["user","service"],f"类型不符，请在{['user','service']}中选择"
+        self.enabled_columns = enabled_columns
+        self.info_data = self.get_row_data()
+        self._fit()
+    
+    @property
+    def _is_available_columns(self):
+        return set(self.enabled_columns).issubset(set(self.info_data.columns.tolist()))
+    
+    def _fit(self):
+        assert self._is_available_columns == True,f"{self.enabled_columns} is not a subset of {self.info_data.columns().tolist()}"
+        self.feature2idx = {}
+        self.feature2num = {}
+        for column in tqdm(self.enabled_columns,desc="Preparing..."):
+            vc = self.info_data[column].value_counts()
+            self.feature2idx[column] = {k:idx for idx,(k,v) in enumerate(vc.to_dict().items())}
+            self.feature2num[column] = len(vc)
+    
+    @property
+    def embedding_nums(self):
+        return [v for k,v in self.feature2num.items()]
+    
+    def query(self,id_):
+        """根据uid或者iid，获得columns的index
+        """
+        row = self.info_data.iloc[id_,:]
+        r = []
+        for column in self.enabled_columns:
+            idx = self.feature2idx[column][row[column]]
+            r.append(idx)
+        return r
 
 class MatrixDataset(DatasetBase):
     def __init__(self,type_,is_normalize=False) -> None:

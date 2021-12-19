@@ -4,10 +4,11 @@ from torch.utils.tensorboard import SummaryWriter
 from utils.model_util import save_checkpoint,load_checkpoint
 
 class ModelBase(object):
-    def __init__(self, loss_fn) -> None:
+    def __init__(self, loss_fn, use_gpu=True) -> None:
         super().__init__()
         self.loss_fn = loss_fn
         self.tb = SummaryWriter()
+        self.device = ("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
 
     def fit(self, train_loader, epochs, optimizer, eval_=True, eval_loader=None, save_model=True, model_name="model_checkpoint.ckpt",max_keep=10):
         self.model.train()
@@ -48,7 +49,6 @@ class ModelBase(object):
                             y_pred = self.model(user, item)
                             y_real = rating.reshape(-1, 1)
                             loss = self.loss_fn(y_pred, y_real)
-                            print(loss,batch_id)
                             eval_total_loss += loss.item()
                         loss_per_epoch = eval_total_loss/len(eval_loader)
                         if best_loss is None:

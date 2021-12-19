@@ -20,7 +20,6 @@ class Clients(object):
         self.get_clients()
 
     def get_clients(self):
-        s = set()
         r = defaultdict(list)
         for row in self.traid:
             uid, iid, rate = int(row[0]), int(row[1]), float(row[2])

@@ -4,10 +4,11 @@ from torch.utils.tensorboard import SummaryWriter
 from utils.model_util import save_checkpoint,load_checkpoint
 
 class ModelBase(object):
-    def __init__(self, loss_fn) -> None:
+    def __init__(self, loss_fn, use_gpu=True) -> None:
         super().__init__()
         self.loss_fn = loss_fn
         self.tb = SummaryWriter()
+        self.device = ("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
 
     def fit(self, train_loader, epochs, optimizer, eval_=True, eval_loader=None, save_model=True, model_name="model_checkpoint.ckpt",max_keep=10):
         self.model.train()

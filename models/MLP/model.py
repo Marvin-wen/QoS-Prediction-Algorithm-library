@@ -26,7 +26,7 @@ class MLP(nn.Module):
         self.fc_layers = nn.ModuleList()
         self.fc_layers.append(nn.Linear(self.latent_dim * 2,layers[0])) # MLP的第一层为latent vec的cat
 
-        for in_size,out_size in zip(layers[:-1],layers[1:]):
+        for in_size,out_size in zip(layers,layers[1:]):
             self.fc_layers.append(nn.Linear(in_size,out_size))
         
         self.fc_output = nn.Linear(layers[-1],output_dim)

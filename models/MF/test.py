@@ -4,7 +4,7 @@ from utils.evaluation import mae,mse,rmse
 from utils.model_util import freeze_random
 
 """
-RESULT UPCC:
+RESULT MF:
 
 """
 
@@ -13,10 +13,10 @@ freeze_random() # 冻结随机数 保证结果一致
 for density in [0.05,0.1,0.15,0.2]:
 
     type_ = "rt"
-    latent_dim = 16
+    latent_dim = 8
     lr = 0.001
     lambda_ = 0.1
-    epochs = 1000
+    epochs = 200
     md_data = MatrixDataset(type_)
     train_data,test_data = md_data.split_train_test(density)
 

@@ -1,9 +1,9 @@
-from .import Clients
-from .import Server
 from data import MatrixDataset
-from .model import FedMF
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
+
+from . import Clients, Server
+from .model import FedMF
 
 """
 RESULT FedMF: 

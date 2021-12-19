@@ -1,16 +1,14 @@
-from torch import optim
-from torch.nn.modules import loss
-from data import MatrixDataset
-from .model import MLPModel
-from utils.evaluation import mae, mse, rmse
-from utils.model_util import freeze_random
-from data import ToTorchDataset
-
-
 import torch
-from torch import nn
+from data import MatrixDataset, ToTorchDataset
+from torch import nn, optim
+from torch.nn.modules import loss
 from torch.optim import Adam
 from torch.utils.data import DataLoader
+from utils.evaluation import mae, mse, rmse
+from utils.model_util import freeze_random
+
+from .model import MLPModel
+
 """
 RESULT MLP:
 """

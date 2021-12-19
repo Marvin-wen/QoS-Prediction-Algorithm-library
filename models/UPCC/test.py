@@ -1,7 +1,8 @@
 from data import MatrixDataset
-from .model import UPCCModel
-from utils.evaluation import mae,mse,rmse
+from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
+
+from .model import UPCCModel
 
 """
 RESULT UPCC:

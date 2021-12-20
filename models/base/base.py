@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 from utils.model_util import save_checkpoint,load_checkpoint
@@ -65,7 +66,7 @@ class ModelBase(object):
                             y_pred = self.model(user, item)
                             y_real = rating.reshape(-1, 1)
                             # loss = self.loss_fn(y_pred, y_real)
-                            loss = mae(y_real,y_pred)
+                            loss = nn.L1Loss()(y_pred,y_real)
                             eval_total_loss += loss.item()
                         loss_per_epoch = eval_total_loss/len(eval_loader)
                         if best_loss is None:

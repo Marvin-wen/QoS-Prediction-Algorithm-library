@@ -9,7 +9,7 @@ from copy import deepcopy
 import torch
 from torch.utils.data import Dataset
 from sklearn.metrics.pairwise import cosine_similarity
-
+from utils.decorator import cache
 
 class ToTorchDataset(Dataset):
     def __init__(self,rating_tuple) -> None:
@@ -69,6 +69,7 @@ class InfoDataset(DatasetBase):
     def embedding_nums(self):
         return [v for k,v in self.feature2num.items()]
     
+    @cache
     def query(self,id_):
         """根据uid或者iid，获得columns的index
         """

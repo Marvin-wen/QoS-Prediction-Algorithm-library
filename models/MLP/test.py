@@ -6,7 +6,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
-
+from root import absolute
 from .model import MLPModel
 
 """
@@ -37,10 +37,10 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     opt = Adam(mlp.parameters(), lr=lr)
 
     mlp.fit(train_dataloader,epochs,opt,eval_loader=test_dataloader)
-    # y, y_pred = mlp.predict(test_data, 20)
+    y, y_pred = mlp.predict(test_dataloader,True,absolute("output/MLPModel/loss_0.2885.ckpt"))
+    print(y,y_pred)
+    mae_ = mae(y, y_pred)
+    mse_ = mse(y, y_pred)
+    rmse_ = rmse(y, y_pred)
 
-    # mae_ = mae(y, y_pred)
-    # mse_ = mse(y, y_pred)
-    # rmse_ = rmse(y, y_pred)
-
-    # print(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
+    print(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")

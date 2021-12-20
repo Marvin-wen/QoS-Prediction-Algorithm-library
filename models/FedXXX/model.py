@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from models.base.base import ModelBase
-from .utils import ResNetEncoder,ResNetBasicBlock
+from .utils import ResNetEncoder, ResNetBasicBlock
 
 
 class FedXXX(nn.Module):
@@ -47,7 +47,6 @@ class Linear(nn.Module):
         return x
 
 
-
 class Embedding(nn.Module):
     def __init__(self, type_, embedding_nums: list, embedding_dims: list):
         self.type = type_
@@ -63,10 +62,13 @@ class Embedding(nn.Module):
 
     def forward(self, indexes):
         if self.type == "stack":
-            assert len(set(self.embedding_dims)) == 1, f"dims should be the same"
-            x = sum([embedding(indexes[:,idx]) for idx,embedding in enumerate(self.embeddings)])
+            assert len(set(self.embedding_dims)
+                       ) == 1, f"dims should be the same"
+            x = sum([embedding(indexes[:, idx])
+                    for idx, embedding in enumerate(self.embeddings)])
         elif self.type == "cat":
-            x = torch.cat([embedding(indexes[:,idx]) for idx,embedding in enumerate(self.embeddings)], dim=1)
+            x = torch.cat([embedding(indexes[:, idx])
+                          for idx, embedding in enumerate(self.embeddings)], dim=1)
         else:
             raise NotImplementedError
         return x
@@ -84,20 +86,20 @@ class SingleEncoder(nn.Module):
         self.resnet_encoder = ResNetEncoder(
             in_size, blocks_sizes, deepths, activation, block)
 
-    def forward(self, indexes:list):
+    def forward(self, indexes: list):
         x = self.embedding(indexes)
         x = self.resnet_encoder(x)
         return x
 
 
 class FedXXXModel(ModelBase):
-    def __init__(self, user_params, item_params, loss_fn, linear_layers: list, output_dim=1, activation=nn.ReLU,use_gpu=True) -> None:
+    def __init__(self, user_params, item_params, loss_fn, linear_layers: list, output_dim=1, activation=nn.ReLU, use_gpu=True) -> None:
         super().__init__(loss_fn, use_gpu)
-
-        self.model = FedXXX(user_params, item_params, linear_layers, output_dim, activation)
-
+        self.model = FedXXX(user_params, item_params,
+                            linear_layers, output_dim, activation)
         if use_gpu:
             self.model.to(self.device)
+        self.name = __class__.__name__
 
     def parameters(self):
         return self.model.parameters()

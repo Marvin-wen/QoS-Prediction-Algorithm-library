@@ -6,7 +6,6 @@ from models.base import ModelBase
 class MLP(nn.Module):
     def __init__(self,n_user,n_item,dim,layers=[32,16,8],output_dim=1) -> None:
         """
-
         Args:
             n_user ([type]): 用户数量
             n_item ([type]): 物品数量
@@ -18,7 +17,6 @@ class MLP(nn.Module):
         self.num_users = n_user
         self.num_items = n_item
         self.latent_dim = dim
-
 
         self.embedding_user = nn.Embedding(num_embeddings=self.num_users, embedding_dim=self.latent_dim)
         self.embedding_item = nn.Embedding(num_embeddings=self.num_items, embedding_dim=self.latent_dim)
@@ -44,11 +42,11 @@ class MLP(nn.Module):
 
 class MLPModel(ModelBase):
     def __init__(self, loss_fn, n_user, n_item, dim, layers=[32, 16, 8], output_dim=1,use_gpu=True) -> None:
+        super().__init__(loss_fn,use_gpu)
         self.model = MLP(n_user, n_item, dim, layers=layers, output_dim=output_dim)
-        self.device = ("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
         if use_gpu:
             self.model.to(self.device) 
-        super().__init__(loss_fn)
+        self.name = __class__.__name__
     
     def parameters(self):
         return self.model.parameters()

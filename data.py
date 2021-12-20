@@ -9,7 +9,8 @@ from copy import deepcopy
 import torch
 from torch.utils.data import Dataset
 from sklearn.metrics.pairwise import cosine_similarity
-from utils.decorator import cache
+from utils.decorator import cache4method
+from functools import wraps
 
 class ToTorchDataset(Dataset):
     def __init__(self,rating_tuple) -> None:
@@ -42,6 +43,7 @@ class DatasetBase(object):
         elif self.type == "service":
             data =  pd.read_csv(WS_DIR,sep="\t")
         return data
+    
 
 class InfoDataset(DatasetBase):
     def __init__(self, type_, enabled_columns:list) -> None:
@@ -69,7 +71,7 @@ class InfoDataset(DatasetBase):
     def embedding_nums(self):
         return [v for k,v in self.feature2num.items()]
     
-    @cache
+    @cache4method
     def query(self,id_):
         """根据uid或者iid，获得columns的index
         """
@@ -160,12 +162,15 @@ class MatrixDataset(DatasetBase):
 
 
 if __name__ == "__main__":
-    md = MatrixDataset("rt")
-    data = md.get_triad()
-    print("random shuffle之前")
-    print(data[:5])
-    print("random shuffle之后")
-    np.random.shuffle(data)
-    print(data[:5])
+    # md = MatrixDataset("rt")
+    # data = md.get_triad()
+    # print("random shuffle之前")
+    # print(data[:5])
+    # print("random shuffle之后")
+    # np.random.shuffle(data)
+    # print(data[:5])
+    ifd = InfoDataset("user",["[User ID]"])
+    print(ifd.feature2idx)
+
 
 

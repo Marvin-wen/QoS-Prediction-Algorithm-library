@@ -61,11 +61,18 @@ class Embedding(nn.Module):
         ])
 
     def forward(self, indexes):
+
         if self.type == "stack":
             assert len(set(self.embedding_dims)
                        ) == 1, f"dims should be the same"
-            x = sum([embedding(indexes[:, idx])
-                    for idx, embedding in enumerate(self.embeddings)])
+            try:
+                x = sum([embedding(indexes[:, idx])
+                        for idx, embedding in enumerate(self.embeddings)])
+            except Exception:
+                for idx, embedding in enumerate(self.embeddings):
+                    print(idx)
+                    print(indexes[:, idx])
+                raise Exception
         elif self.type == "cat":
             x = torch.cat([embedding(indexes[:, idx])
                           for idx, embedding in enumerate(self.embeddings)], dim=1)

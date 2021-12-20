@@ -19,6 +19,11 @@ from .model import FedXXXModel
 RESULT MODEL:
 """
 
+epochs = 1000
+desnity = 0.05
+type_ = "rt"
+u_enable_columns = ["[User ID]", "[Country]"]
+i_enable_columns = ["[Service ID]", "[Country]"]
 
 def data_preprocess(traid,u_info_obj:InfoDataset,i_info_obj:InfoDataset):
     r = []
@@ -29,16 +34,17 @@ def data_preprocess(traid,u_info_obj:InfoDataset,i_info_obj:InfoDataset):
         r.append([u,i,rate])
     return r
 
-md = MatrixDataset("rt")
-u_info = InfoDataset("user",["[User ID]", "[Country]"])
-i_info = InfoDataset("service",["[Service ID]", "[Country]"])
-train,test = md.split_train_test(0.05)
+md = MatrixDataset(type_)
+u_info = InfoDataset("user",u_enable_columns)
+i_info = InfoDataset("service",i_enable_columns)
+train,test = md.split_train_test(desnity)
 train_data = data_preprocess(train,u_info,i_info)
 test_data = data_preprocess(test,u_info,i_info)
 train_data = ToTorchDataset(train_data)
 test_data = ToTorchDataset(test_data)
 
 train_dataloader = DataLoader(train_data, batch_size=64)
+test_dataloader = DataLoader(test_data,batch_size=64)
 
 user_params = {
     "type_":"stack", # embedding层整合方式 stack or cat
@@ -66,4 +72,4 @@ loss_fn = nn.SmoothL1Loss()
 model = FedXXXModel(user_params,item_params,loss_fn,[16])
 
 opt = Adam(model.parameters(), lr=0.001)
-model.fit(train_dataloader,100,opt)
+model.fit(train_dataloader,epochs,opt,eval_loader=test_dataloader)

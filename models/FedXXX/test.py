@@ -25,9 +25,9 @@ from .model import FedXXXModel
 RESULT MODEL:
 """
 
-IS_FED = True
+IS_FED = False
 
-epochs = 1
+epochs = 1000
 desnity = 0.05
 type_ = "rt"
 
@@ -51,7 +51,7 @@ def data_preprocess(traid,u_info_obj:InfoDataset,i_info_obj:InfoDataset,is_dtrai
         uid,iid,rate = int(row[0]),int(row[1]),float(row[2])
         u = u_info_obj.query(uid)
         i = i_info_obj.query(iid)
-        r.append([[uid,iid,rate],[u,i,rate]]) if is_dtraid else r.append([uid,iid,rate])
+        r.append([[uid,iid,rate],[u,i,rate]]) if is_dtraid else r.append([u,i,rate])
     return r
 
 fed_data_preprocess = partial(data_preprocess,is_dtraid=True)
@@ -66,10 +66,10 @@ train,test = md.split_train_test(desnity)
 user_params = {
     "type_":"stack", # embedding层整合方式 stack or cat
     "embedding_nums":u_info.embedding_nums,# 每个要embedding的特征的总个数
-    "embedding_dims":[16,16],
-    "in_size":16, # embedding后接一个全连阶层在进入resnet
-    "blocks_sizes":[16,8], # 最后的输出是8
-    "deepths":[2],
+    "embedding_dims":[8,8],
+    "in_size":8, # embedding后接一个全连阶层在进入resnet
+    "blocks_sizes":[8,8], # 最后的输出是8
+    "deepths":[1],
     "activation":nn.ReLU,
     "block":ResNetBasicBlock
 }
@@ -77,10 +77,10 @@ user_params = {
 item_params = {
     "type_":"stack", # embedding层整合方式 stack or cat
     "embedding_nums":i_info.embedding_nums,# 每个要embedding的特征的总个数
-    "embedding_dims":[16,16],
-    "in_size":16,
-    "blocks_sizes":[16,8], # item最后的输出是8
-    "deepths":[2],
+    "embedding_dims":[8,8],
+    "in_size":8,
+    "blocks_sizes":[8], # item最后的输出是8
+    "deepths":[1],
     "activation":nn.ReLU,
     "block":ResNetBasicBlock
 }
@@ -92,11 +92,18 @@ if not IS_FED:
     test_data = data_preprocess(test,u_info,i_info)
     train_dataset = ToTorchDataset(train_data)
     test_dataset = ToTorchDataset(test_data)
-    train_dataloader = DataLoader(train_dataset, batch_size=64)
-    test_dataloader = DataLoader(test_dataset,batch_size=64)
+    train_dataloader = DataLoader(train_dataset, batch_size=128)
+    test_dataloader = DataLoader(test_dataset,batch_size=128)
     model = FedXXXModel(user_params,item_params,loss_fn,[16]) # 非联邦
     opt = Adam(model.parameters(), lr=0.001)
     model.fit(train_dataloader,epochs,opt,eval_loader=test_dataloader)
+    # y, y_pred = model.predict(test_dataloader,True,"D:\yuwenzhuo\QoS-Predcition-Algorithm-library\output\FedXXXModel\loss_0.3477.ckpt")
+    # mae_ = mae(y, y_pred)
+    # mse_ = mse(y, y_pred)
+    # rmse_ = rmse(y, y_pred)
+
+    print(f"Density:{0.05},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
+
 
 else:
     train_data = fed_data_preprocess(train,u_info,i_info)

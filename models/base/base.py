@@ -112,12 +112,16 @@ class ModelBase(object):
         with torch.no_grad():
             for batch_id, batch in tqdm(enumerate(test_loader)):
                 user, item, rating = batch[0].to(self.device), batch[1].to(self.device), batch[2].to(self.device)
-                y_pred = self.model(user, item)
+                y_pred = self.model(user, item).squeeze()
                 y_real = rating.reshape(-1, 1)
-                y_pred_list.append(y_pred.squeeze())
-                y_list.append(y_real.squeeze())
+                if len(y_pred.shape) == 0: # 64一batch导致变成了标量
+                    y_pred = y_pred.unsqueeze(dim=0)
+                if len(y_real.shape) == 0: # 64一batch导致变成了标量
+                    y_real = y_real.unsqueeze(dim=0)
+                y_pred_list.append(y_pred)
+                y_list.append(y_real)
 
-        return torch.cat(y_list),torch.cat(y_pred_list)
+        return torch.cat(y_list).cpu().numpy(),torch.cat(y_pred_list).cpu().numpy()
 
 
 

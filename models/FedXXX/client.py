@@ -1,5 +1,5 @@
 from collections import OrderedDict, defaultdict
-from functools import partial
+from functools import partialmethod
 
 import torch
 from tqdm import tqdm
@@ -21,7 +21,7 @@ class Client(object):
         self.model = model
         self.n_item = len(traid)
         self.train_loader = DataLoader(
-            ToTorchDataset(self.traid), batch_size=64, drop_last=True)
+            ToTorchDataset(self.traid), batch_size=128, drop_last=True)
         self.single_batch = DataLoader(
             ToTorchDataset(self.traid), batch_size=1, drop_last=True)
 
@@ -38,7 +38,7 @@ class Client(object):
             loss = loss_fn(y_pred, y_real)
             loss.backward()
             opt.step()
-        return self.model.state_dict()
+        return self.model.state_dict(),loss
 
     def upload_feature(self, params):
         self.model.load_state_dict(params)
@@ -67,6 +67,7 @@ class Clients(object):
         self.clients_feature_map = OrderedDict()  # 存储每个client的feature
         self.traid2matrix = traid_to_matrix(self.traid, -1)
         self.u_mean = nonzero_mean(self.traid2matrix, -1)
+
         self._get_clients()
 
     def _get_clients(self):
@@ -81,14 +82,14 @@ class Clients(object):
 
     def get_similarity_matrix(self):
         l = []
-        cnt = -1  # 这个是为了防止user取得不连续
+        cnt = 0  # 这个是为了防止user取得不连续
         for uid, val in OrderedDict(sorted(self.clients_feature_map.items(), key=lambda x: x[0])).items():
             if cnt != int(uid):
                 for i in range(int(uid)-cnt):
                     l.append(np.zeros_like(val.numpy()))
                 cnt = uid
             else:
-                l.append(val.numpy())
+                l.append(val.cpu().numpy())
                 cnt += 1
         l = np.array(l)
         return l
@@ -101,12 +102,18 @@ class Clients(object):
                 return self.u_mean[uid]
         except Exception:
             return None
+    # https://stackoverflow.com/questions/16626789/functools-partial-on-class-method 
+    # The code below is wrong!
+    # def query_rate(self):
+    #     return partial(self._query, self=self, type_="rate")
 
-    def query_rate(self):
-        return partial(self._query, type_="rate")
 
-    def query_mean(self):
-        return partial(self._query, iid=None, type_="mean")
+
+    def query_rate(self,uid,iid):
+        return self._query(uid,iid,"rate")
+
+    def query_mean(self,uid):
+        return self._query(uid,None,"mean")
 
     def __len__(self):
         return len(self.clients_map)

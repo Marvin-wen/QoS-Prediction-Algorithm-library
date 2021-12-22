@@ -21,14 +21,14 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     latent_dim = 8
     lr = 0.001
     lambda_ = 0.1
-    epochs = 200
+    epochs = 10
     md_data = MatrixDataset(type_)
     train_data, test_data = md_data.split_train_test(density)
 
     clients = Clients(train_data, md_data.row_n, latent_dim)
     server = Server(md_data.col_n, latent_dim)
 
-    mf = FedMF(server, clients.clients_map)
+    mf = FedMF(server, clients)
     mf.fit(epochs, lambda_, lr)
     y, y_pred = mf.predict(test_data)
 

@@ -63,14 +63,33 @@ def traid_to_matrix(traid,nan_symbol=-1):
         [type]: [description]
     """
     # 注意下标应该为int
+    if not isinstance(traid,np.ndarray):
+        traid = np.array(traid)
     x_max = traid[:,0].max().astype(int)
     y_max = traid[:,1].max().astype(int)
     matrix = np.full((x_max+1,y_max+1),nan_symbol,dtype=traid.dtype)
     matrix[traid[:,0].astype(int),traid[:,1].astype(int)] = traid[:,2]
     return matrix
 
+def split_d_traid(d_traid):
+    l = np.array(d_traid,dtype=np.object)
+    return np.array(l[:,0].tolist()), l[:,1].tolist()
+
 def nonzero_mean(matrix,nan_symbol):
     m = copy.deepcopy(matrix)
     m[matrix==nan_symbol] = 0
     t = (m != 0).sum(axis=-1)
     return (m.sum(axis=-1) / t).squeeze()
+
+if __name__ == "__main__":
+    d_traid = [
+        [[1,2,3.2],[[1,1],[2,2],3.2]],
+        [[1,2,3.2],[[1,1],[2,2],3.2]],
+        [[1,2,3.2],[[1,1],[2,2],3.2]],
+        [[1,2,3.2],[[1,1],[2,2],3.2]]
+
+    ]
+    a,b = split_d_traid(d_traid)
+    t2m = traid_to_matrix(a)
+    print(t2m)
+    print(nonzero_mean(t2m,-1))

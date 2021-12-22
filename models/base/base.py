@@ -1,9 +1,9 @@
 import torch
-from torch import nn
-from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
-from utils.model_util import save_checkpoint,load_checkpoint
-from utils.evaluation import mae,mse,rmse
+from tqdm import tqdm
+from utils.evaluation import mae, mse, rmse
+from utils.model_util import load_checkpoint, save_checkpoint
+
 
 class ModelBase(object):
     def __init__(self, loss_fn, use_gpu=True) -> None:
@@ -65,8 +65,7 @@ class ModelBase(object):
                             user, item, rating = batch[0].to(self.device), batch[1].to(self.device), batch[2].to(self.device)
                             y_pred = self.model(user, item)
                             y_real = rating.reshape(-1, 1)
-                            # loss = self.loss_fn(y_pred, y_real)
-                            loss = nn.L1Loss()(y_pred,y_real)
+                            loss = self.loss_fn(y_pred, y_real)
                             eval_total_loss += loss.item()
                         loss_per_epoch = eval_total_loss/len(eval_loader)
                         if best_loss is None:

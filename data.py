@@ -13,15 +13,15 @@ from utils.decorator import cache4method
 from functools import wraps
 
 class ToTorchDataset(Dataset):
-    def __init__(self,rating_tuple) -> None:
+    def __init__(self,traid) -> None:
         super().__init__()
-        self.rating_tuple = rating_tuple
-        self.user_tensor = torch.LongTensor([i[0] for i in rating_tuple])
-        self.item_tensor = torch.LongTensor([i[1] for i in rating_tuple])
-        self.target_tensor = torch.FloatTensor([i[2] for i in rating_tuple])    
+        self.traid = traid
+        self.user_tensor = torch.LongTensor([i[0] for i in traid])
+        self.item_tensor = torch.LongTensor([i[1] for i in traid])
+        self.target_tensor = torch.FloatTensor([i[2] for i in traid])    
 
     def __len__(self):
-        return len(self.rating_tuple)
+        return len(self.traid)
 
     def __getitem__(self, index):
         return self.user_tensor[index], self.item_tensor[index], self.target_tensor[index]

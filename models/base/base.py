@@ -1,8 +1,9 @@
 import torch
-from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
-from utils.model_util import save_checkpoint,load_checkpoint
-from utils.evaluation import mae,mse,rmse
+from tqdm import tqdm
+from utils.evaluation import mae, mse, rmse
+from utils.model_util import load_checkpoint, save_checkpoint
+
 
 class ModelBase(object):
     def __init__(self, loss_fn, use_gpu=True) -> None:

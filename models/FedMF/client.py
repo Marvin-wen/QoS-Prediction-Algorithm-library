@@ -1,5 +1,4 @@
 from collections import defaultdict
-from numpy.lib.function_base import select
 import numpy as np
 
 class Client(object):
@@ -17,9 +16,9 @@ class Clients(object):
         self.traid = traid
         self.clients_map = {}
         self.users_vec = 2 * np.random.random((n_user,latent_dim)) - 1
-        self.get_clients()
+        self._get_clients()
 
-    def get_clients(self):
+    def _get_clients(self):
         r = defaultdict(list)
         for row in self.traid:
             uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
@@ -27,4 +26,13 @@ class Clients(object):
         for uid,rows in r.items():
             self.clients_map[uid] = Client(np.array(rows),uid,self.users_vec[uid])
         print(f"Clients Nums:{len(self.clients_map)}")
+    
+    def __len__(self):
+        return len(self.clients_map)
+
+    def __iter__(self):
+        for item in self.clients_map.items():
+            yield item
+    def __getitem__(self,uid):
+        return self.clients_map[uid]
 

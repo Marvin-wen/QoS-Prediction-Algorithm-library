@@ -17,7 +17,6 @@ def cache4method(func):
     """
     @wraps(func)
     def wrapper(self,*args,**kwargs):
-
         keys = list(args) + list(kwargs.values())
         for key in keys:
             key = str(id(self)) + str(key)

@@ -100,6 +100,7 @@ if not IS_FED:
 
 else:
     train_data = fed_data_preprocess(train,u_info,i_info)
+    test_data = fed_data_preprocess(test,u_info,i_info)
     model = FedXXXLaunch(train_data,user_params,item_params,[16],loss_fn,1,nn.ReLU)
-    model.fit(epochs,lr=0.001)
+    model.fit(epochs,lr=0.001,test_d_traid=test_data)
 

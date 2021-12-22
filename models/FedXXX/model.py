@@ -3,6 +3,8 @@ import torch
 from torch import nn
 import numpy as np
 from torch.optim.adam import Adam
+from torch.utils.data.dataloader import DataLoader
+from data import ToTorchDataset
 from models.base.base import ModelBase
 from .utils import ResNetEncoder, ResNetBasicBlock
 from .client import Clients
@@ -138,8 +140,9 @@ class FedXXXLaunch:
         self.optimizer = optimizer
         self.loss_fn = loss_fn
 
+
     def fit(self, epochs, lr, test_d_traid):
-        for epoch in tqdm(range(epochs), desc="Epochs:"):
+        for epoch in tqdm(range(epochs), desc="Epochs "):
             collector = []
             # 1. 从服务端获得参数
             s_params = self.server.params if epoch != 0 else self._model.state_dict()
@@ -164,13 +167,16 @@ class FedXXXLaunch:
 
                 print(f"mae:{mae_},mse:{mse_},rmse:{rmse_}")
 
-
-    def predict(self, d_traid, similarity_th=0.6,w=0.6):
+    # 这里的代码写的很随意 没时间优化了
+    def predict(self, d_traid, similarity_th=0.6,w=0.6,use_gpu=True):
+        self.device = ("cuda" if (
+            use_gpu and torch.cuda.is_available()) else "cpu")
         s_params = self.server.params
         self._model.load_state_dict(s_params)
         y_pred_list = []
         y_list = []
         traid, p_traid = split_d_traid(d_traid)
+        p_traid_dataloader = DataLoader(ToTorchDataset(p_traid),batch_size=64) # 这里可以优化 这样写不是很好
         similarity_matrix = self.clients.get_similarity_matrix()
 
         def upcc():
@@ -187,18 +193,25 @@ class FedXXXLaunch:
             else:
                 return 0
 
+        self._model.eval()
         with torch.no_grad():
             # for batch_id, batch in tqdm(enumerate(test_loader)):
-            for traid_row, p_traid_row in tqdm(zip(traid, p_traid),desc="Predict"):
+            for batch_id,batch in tqdm(enumerate(p_traid_dataloader), desc="Model Predict"):
+                user,item,rate = batch[0].to(self.device), batch[1].to(
+                    self.device), batch[2].to(self.device)
+                y_pred = self._model(user,item).squeeze()
+                if len(y_pred.shape) == 0: # 64一batch导致变成了标量
+                    y_pred = y_pred.unsqueeze(dim=0)
+                y_pred_list.append(y_pred)
+            y_pred_list = torch.cat(y_pred_list).numpy()
+            y_pred_sim_list = []
 
-                uid, iid, rate = int(traid_row[0]), int(traid_row[1]), float(traid_row[2])
-                user = torch.tensor(np.array(p_traid_row[0])[np.newaxis, :])
-                item = torch.tensor(np.array(p_traid_row[1])[np.newaxis, :])
-                y_pred = self._model(user, item).item()
-
+            for row in tqdm(traid, desc="CF Predict"):
+                uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
                 sim = upcc()
-                sim_pred = w * y_pred + (1-w) * sim
-                # print(f"y_pred:{y_pred}, using sim {sim_pred}, y_real:{rate}")
+                y_pred_sim_list.append(sim)
 
-                y_pred_list.append(sim_pred)
-                y_list.append(rate)
+            y_p_s_l = np.array(y_pred_sim_list)
+            sim_pred = w * y_pred_list + (1-w) * y_p_s_l
+            y_list.append(rate)
+        return y_list,sim_pred

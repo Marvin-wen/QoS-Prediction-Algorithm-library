@@ -9,18 +9,19 @@ from copy import deepcopy
 import torch
 from torch.utils.data import Dataset
 from sklearn.metrics.pairwise import cosine_similarity
-
+from utils.decorator import cache4method
+from functools import wraps
 
 class ToTorchDataset(Dataset):
-    def __init__(self,rating_tuple) -> None:
+    def __init__(self,traid) -> None:
         super().__init__()
-        self.rating_tuple = rating_tuple
-        self.user_tensor = torch.LongTensor([i[0] for i in rating_tuple])
-        self.item_tensor = torch.LongTensor([i[1] for i in rating_tuple])
-        self.target_tensor = torch.FloatTensor([i[2] for i in rating_tuple])    
+        self.traid = traid
+        self.user_tensor = torch.LongTensor([i[0] for i in traid])
+        self.item_tensor = torch.LongTensor([i[1] for i in traid])
+        self.target_tensor = torch.FloatTensor([i[2] for i in traid])    
 
     def __len__(self):
-        return len(self.rating_tuple)
+        return len(self.traid)
 
     def __getitem__(self, index):
         return self.user_tensor[index], self.item_tensor[index], self.target_tensor[index]
@@ -42,6 +43,7 @@ class DatasetBase(object):
         elif self.type == "service":
             data =  pd.read_csv(WS_DIR,sep="\t")
         return data
+    
 
 class InfoDataset(DatasetBase):
     def __init__(self, type_, enabled_columns:list) -> None:
@@ -69,6 +71,7 @@ class InfoDataset(DatasetBase):
     def embedding_nums(self):
         return [v for k,v in self.feature2num.items()]
     
+    @cache4method
     def query(self,id_):
         """根据uid或者iid，获得columns的index
         """
@@ -159,12 +162,15 @@ class MatrixDataset(DatasetBase):
 
 
 if __name__ == "__main__":
-    md = MatrixDataset("rt")
-    data = md.get_triad()
-    print("random shuffle之前")
-    print(data[:5])
-    print("random shuffle之后")
-    np.random.shuffle(data)
-    print(data[:5])
+    # md = MatrixDataset("rt")
+    # data = md.get_triad()
+    # print("random shuffle之前")
+    # print(data[:5])
+    # print("random shuffle之后")
+    # np.random.shuffle(data)
+    # print(data[:5])
+    ifd = InfoDataset("user",["[User ID]"])
+    print(ifd.feature2idx)
+
 
 

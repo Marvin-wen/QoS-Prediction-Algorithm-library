@@ -1,7 +1,8 @@
 from data import MatrixDataset
-from .model import MFModel
-from utils.evaluation import mae,mse,rmse
+from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
+
+from .model import MFModel
 
 """
 RESULT MF:

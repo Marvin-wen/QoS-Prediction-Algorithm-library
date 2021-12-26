@@ -1,9 +1,9 @@
-from .import Clients
-from .import Server
 from data import MatrixDataset
-from .model import FedMF
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
+
+from . import Clients, Server
+from .model import FedMF
 
 """
 RESULT FedMF: 
@@ -21,14 +21,14 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     latent_dim = 8
     lr = 0.001
     lambda_ = 0.1
-    epochs = 200
+    epochs = 10
     md_data = MatrixDataset(type_)
     train_data, test_data = md_data.split_train_test(density)
 
     clients = Clients(train_data, md_data.row_n, latent_dim)
     server = Server(md_data.col_n, latent_dim)
 
-    mf = FedMF(server, clients.clients_map)
+    mf = FedMF(server, clients)
     mf.fit(epochs, lambda_, lr)
     y, y_pred = mf.predict(test_data)
 

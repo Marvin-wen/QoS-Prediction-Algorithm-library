@@ -41,6 +41,7 @@ var/
 logs/
 runs/
 wheels/
+output/
 *.egg-info/
 .installed.cfg
 *.egg

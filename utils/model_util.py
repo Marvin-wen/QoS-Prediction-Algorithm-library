@@ -1,70 +1,38 @@
-from scipy.sparse.construct import rand
-import torch
-import random
-import numpy as np
 import copy
 import os
+import random
 import shutil
+
+import numpy as np
+import torch
+from root import absolute
+from scipy.sparse.construct import rand
+
 """
     Some handy functions for model training ...
 """
 
-
-def save_checkpoint(state, save_path: str, is_best: bool = False, max_keep: int = None):
-    """Saves torch model to checkpoint file.
-    Args:
-        state (torch model state): State of a torch Neural Network
-        save_path (str): Destination path for saving checkpoint
-        is_best (bool): If ``True`` creates additional copy
-            ``best_model.ckpt``
-        max_keep (int): Specifies the max amount of checkpoints to keep
-    """
-    # save checkpoint
-    torch.save(state, save_path)
-
-    # deal with max_keep
-    save_dir = os.path.dirname(save_path)
-    list_path = os.path.join(save_dir, 'latest_checkpoint.txt')
-
-    save_path = os.path.basename(save_path)
-    if os.path.exists(list_path):
-        with open(list_path) as f:
-            ckpt_list = f.readlines()
-            ckpt_list = [save_path + '\n'] + ckpt_list
-    else:
-        ckpt_list = [save_path + '\n']
-
-    if max_keep is not None:
-        for ckpt in ckpt_list[max_keep:]:
-            ckpt = os.path.join(save_dir, ckpt[:-1])
-            if os.path.exists(ckpt):
-                os.remove(ckpt)
-        ckpt_list[max_keep:] = []
-
-    with open(list_path, 'w') as f:
-        f.writelines(ckpt_list)
-
-    # copy best
+def save_checkpoint(state, is_best, save_dirname="output", save_filename="best_model.ckpt"):
+    """Save checkpoint if a new best is achieved"""
+    if not os.path.isdir(absolute(save_dirname)):
+        os.makedirs(absolute(save_dirname))
+    file_path= absolute(f"{save_dirname}/{save_filename}")
     if is_best:
-        shutil.copyfile(save_path, os.path.join(save_dir, 'best_model.ckpt'))
+        print ("=> Saving a new best")
+        torch.save(state, file_path)  # save checkpoint
+    else:
+        print ("=> Validation Accuracy did not improve")
 
-def load_checkpoint(ckpt_dir_or_file: str, map_location=None, load_best=False):
+
+def load_checkpoint(file_path: str, device=None):
     """Loads torch model from checkpoint file.
     Args:
-        ckpt_dir_or_file (str): Path to checkpoint directory or filename
-        map_location: Can be used to directly load to specific device
-        load_best (bool): If True loads ``best_model.ckpt`` if exists.
+        file_path (str): Path to checkpoint directory or filename
     """
-    if os.path.isdir(ckpt_dir_or_file):
-        if load_best:
-            ckpt_path = os.path.join(ckpt_dir_or_file, 'best_model.ckpt')
-        else:
-            with open(os.path.join(ckpt_dir_or_file, 'latest_checkpoint.txt')) as f:
-                ckpt_path = os.path.join(ckpt_dir_or_file, f.readline()[:-1])
-    else:
-        ckpt_path = ckpt_dir_or_file
-    ckpt = torch.load(ckpt_path, map_location=map_location)
-    print(' [*] Loading checkpoint from %s succeed!' % ckpt_path)
+    if not os.path.exists(file_path):
+        raise Exception("ckpt file doesn't exist")
+    ckpt = torch.load(file_path,map_location=device)
+    print(' [*] Loading checkpoint from %s succeed!' % file_path)
     return ckpt
 
 
@@ -95,14 +63,33 @@ def traid_to_matrix(traid,nan_symbol=-1):
         [type]: [description]
     """
     # 注意下标应该为int
+    if not isinstance(traid,np.ndarray):
+        traid = np.array(traid)
     x_max = traid[:,0].max().astype(int)
     y_max = traid[:,1].max().astype(int)
     matrix = np.full((x_max+1,y_max+1),nan_symbol,dtype=traid.dtype)
     matrix[traid[:,0].astype(int),traid[:,1].astype(int)] = traid[:,2]
     return matrix
 
+def split_d_traid(d_traid):
+    l = np.array(d_traid,dtype=np.object)
+    return np.array(l[:,0].tolist()), l[:,1].tolist()
+
 def nonzero_mean(matrix,nan_symbol):
     m = copy.deepcopy(matrix)
     m[matrix==nan_symbol] = 0
     t = (m != 0).sum(axis=-1)
     return (m.sum(axis=-1) / t).squeeze()
+
+if __name__ == "__main__":
+    d_traid = [
+        [[1,2,3.2],[[1,1],[2,2],3.2]],
+        [[1,2,3.2],[[1,1],[2,2],3.2]],
+        [[1,2,3.2],[[1,1],[2,2],3.2]],
+        [[1,2,3.2],[[1,1],[2,2],3.2]]
+
+    ]
+    a,b = split_d_traid(d_traid)
+    t2m = traid_to_matrix(a)
+    print(t2m)
+    print(nonzero_mean(t2m,-1))

@@ -18,20 +18,20 @@ class IMEANModel(object):
             self.i_mean[iid] = np.average(rate_lis)
         print("Prepare imeans done!")
 
-    def predict(self,traid,code_boot=None):
+    def predict(self,traid,cold_boot=None):
         assert self.i_mean != {},"Please fit first. e.g. model.fit(traid)"
         y_lis = []
         y_pred_lis = []
-        code_boot_cnt = 0
+        cold_boot_cnt = 0
         print("Predicting...")
         for row in tqdm(traid):
             uid,iid,y = int(row[0]),int(row[1]),float(row[2])
-            y_pred = self.i_mean.get(iid,code_boot)
+            y_pred = self.i_mean.get(iid,cold_boot)
             if y_pred == None:
-                code_boot_cnt += 1
+                cold_boot_cnt += 1
                 continue
             y_lis.append(y)
             y_pred_lis.append(y_pred)
-        print(f"Predicting done! code_boot:{code_boot_cnt/len(traid)*100:.4f}%")
+        print(f"Predicting done! cold_boot:{cold_boot_cnt/len(traid)*100:.4f}%")
         return y_lis,y_pred_lis
 

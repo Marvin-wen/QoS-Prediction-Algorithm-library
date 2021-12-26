@@ -97,10 +97,10 @@ if not IS_FED:
     model = FedXXXModel(user_params,item_params,loss_fn,[16]) # 非联邦
     opt = Adam(model.parameters(), lr=0.001)
     model.fit(train_dataloader,epochs,opt,eval_loader=test_dataloader)
-    # y, y_pred = model.predict(test_dataloader,True,"D:\yuwenzhuo\QoS-Predcition-Algorithm-library\output\FedXXXModel\loss_0.3477.ckpt")
-    # mae_ = mae(y, y_pred)
-    # mse_ = mse(y, y_pred)
-    # rmse_ = rmse(y, y_pred)
+    y, y_pred = model.predict(test_dataloader,True,"D:\yuwenzhuo\QoS-Predcition-Algorithm-library\output\FedXXXModel\loss_0.3477.ckpt")
+    mae_ = mae(y, y_pred)
+    mse_ = mse(y, y_pred)
+    rmse_ = rmse(y, y_pred)
 
     print(f"Density:{0.05},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
 

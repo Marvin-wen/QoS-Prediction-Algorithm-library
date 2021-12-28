@@ -3,6 +3,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import load_checkpoint, save_checkpoint
+from utils.mylogger import TNLog
 
 
 class ModelBase(object):
@@ -12,6 +13,8 @@ class ModelBase(object):
         self.tb = SummaryWriter()
         self.device = ("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = self.__class__.__name__
+        self.logger = TNLog(self.name)
+        self.logger.initial_logger()
 
     def fit(self, train_loader, epochs, optimizer, eval_=True, eval_loader=None, save_model=False, save_filename=""):
         """Eval 为True自动保存最优模型（推荐），save_model为True间隔epoch后自动保存模型
@@ -51,7 +54,7 @@ class ModelBase(object):
             loss_per_epoch = train_batch_loss / len(train_loader)
             train_loss_list.append(loss_per_epoch)
 
-            print(
+            self.logger.info(
                 f"Training Epoch:[{epoch}/{epochs}] Loss:{loss_per_epoch:.4f}")
             self.tb.add_scalar("Training Loss", loss_per_epoch, epoch)
 
@@ -77,7 +80,7 @@ class ModelBase(object):
                         else:
                             is_best = False
                         eval_loss_list.append(loss_per_epoch)
-                        print(f"Test loss:", loss_per_epoch)
+                        self.logger.info(f"Test loss:", loss_per_epoch)
                         self.tb.add_scalar("Eval loss", loss_per_epoch, epoch)
                         if is_best:
                             ckpt = {
@@ -106,7 +109,7 @@ class ModelBase(object):
         if resume:
             ckpt = load_checkpoint(path)
             self.model.load_state_dict(ckpt['model'])
-            print(f"last checkpoint restored! ckpt: loss {ckpt['best_loss']:.4f} Epoch {ckpt['epoch']}")
+            self.logger.info(f"last checkpoint restored! ckpt: loss {ckpt['best_loss']:.4f} Epoch {ckpt['epoch']}")
         
         self.model.eval()
         with torch.no_grad():

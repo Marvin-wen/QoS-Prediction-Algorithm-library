@@ -6,7 +6,7 @@ from tqdm import tqdm
 import numpy as np
 from data import ToTorchDataset
 from torch.utils.data import DataLoader
-from utils.model_util import split_d_traid, nonzero_mean, traid_to_matrix
+from utils.model_util import split_d_traid, nonzero_mean, traid_to_matrix, use_optimizer
 
 
 class Client(object):
@@ -26,18 +26,19 @@ class Client(object):
             ToTorchDataset(self.traid), batch_size=1, drop_last=True)
 
     def fit(self, params, loss_fn, optimizer, lr):
-        self.model.load_state_dict(params)
-        opt = optimizer(self.model.parameters(), lr)
-        for batch_id, batch in enumerate(self.train_loader):
-            user, item, rating = batch[0].to(self.device), batch[1].to(
-                self.device), batch[2].to(self.device)
-            # print(user, item, rating)
-            y_real = rating.reshape(-1, 1)
-            opt.zero_grad()
-            y_pred = self.model(user, item)
-            loss = loss_fn(y_pred, y_real)
-            loss.backward()
-            opt.step()
+        for i in range(5):
+            self.model.load_state_dict(params)
+            opt = optimizer(self.model.parameters(), lr)
+            for batch_id, batch in enumerate(self.train_loader):
+                user, item, rating = batch[0].to(self.device), batch[1].to(
+                    self.device), batch[2].to(self.device)
+                # print(user, item, rating)
+                y_real = rating.reshape(-1, 1)
+                opt.zero_grad()
+                y_pred = self.model(user, item)
+                loss = loss_fn(y_pred, y_real)
+                loss.backward()
+                opt.step()
         return self.model.state_dict(),loss
 
     def upload_feature(self, params):

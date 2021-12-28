@@ -13,6 +13,7 @@ from tqdm import tqdm
 from utils.model_util import split_d_traid,save_checkpoint
 from utils.evaluation import mae,mse,rmse
 from utils.decorator import timeit
+from utils.model_util import use_optimizer
 
 class FedXXX(nn.Module):
     def __init__(self, user_params, item_params, linear_layers: list, output_dim=1, activation=nn.ReLU) -> None:
@@ -193,7 +194,7 @@ class FedXXXLaunch:
             else:
                 return 0
 
-        # self._model.train()
+        self._model.eval()
         with torch.no_grad():
             # for batch_id, batch in tqdm(enumerate(test_loader)):
             for batch_id,batch in tqdm(enumerate(p_traid_dataloader), desc="Model Predict"):
@@ -215,3 +216,12 @@ class FedXXXLaunch:
             y_p_s_l = np.array(y_pred_sim_list)
             sim_pred = w * y_pred_list + (1-w) * y_p_s_l
         return y_list,sim_pred
+
+    def parameters(self):
+        return self._model.parameters()
+
+    def __str__(self) -> str:
+        return str(self._model)
+
+    def __repr__(self) -> str:
+        return repr(self._model)

@@ -25,7 +25,7 @@ from .model import FedXXXModel
 RESULT MODEL:
 """
 
-IS_FED = False
+IS_FED = True
 
 epochs = 1000
 desnity = 0.05
@@ -62,30 +62,42 @@ md = MatrixDataset(type_)
 u_info = InfoDataset("user",u_enable_columns)
 i_info = InfoDataset("service",i_enable_columns)
 train,test = md.split_train_test(desnity)
+ 
+
+loss_fn = nn.SmoothL1Loss()
+
 
 user_params = {
-    "type_":"stack", # embedding层整合方式 stack or cat
+    "type_":"cat", # embedding层整合方式 stack or cat
     "embedding_nums":u_info.embedding_nums,# 每个要embedding的特征的总个数
-    "embedding_dims":[8,8],
+    "embedding_dims":[4,4],
     "in_size":8, # embedding后接一个全连阶层在进入resnet
-    "blocks_sizes":[8,8], # 最后的输出是8
-    "deepths":[1],
+    "blocks_sizes":[8,32,16], # 最后的输出是8
+    "deepths":[1,1],
     "activation":nn.ReLU,
     "block":ResNetBasicBlock
 }
 
 item_params = {
-    "type_":"stack", # embedding层整合方式 stack or cat
+    "type_":"cat", # embedding层整合方式 stack or cat
     "embedding_nums":i_info.embedding_nums,# 每个要embedding的特征的总个数
-    "embedding_dims":[8,8],
+    "embedding_dims":[4,4],
     "in_size":8,
-    "blocks_sizes":[8], # item最后的输出是8
-    "deepths":[1],
+    "blocks_sizes":[8,32,16], # item最后的输出是8
+    "deepths":[1,1],
     "activation":nn.ReLU,
     "block":ResNetBasicBlock
 }
-
-loss_fn = nn.SmoothL1Loss()
+def _check_params(params):
+    if params["type_"] == "cat":
+        embedding_dims = params["embedding_dims"]
+        in_size = params["in_size"]
+        assert sum(embedding_dims) == in_size
+        deepths = params["deepths"]
+        blocks_sizes = params["blocks_sizes"]
+        assert len(blocks_sizes) - 1 == len(deepths)
+_check_params(user_params)
+_check_params(item_params)
 
 if not IS_FED:
     train_data = data_preprocess(train,u_info,i_info)
@@ -108,6 +120,8 @@ if not IS_FED:
 else:
     train_data = fed_data_preprocess(train,u_info,i_info)
     test_data = fed_data_preprocess(test,u_info,i_info)
-    model = FedXXXLaunch(train_data,user_params,item_params,[16],loss_fn,1,nn.ReLU)
+    model = FedXXXLaunch(train_data,user_params,item_params,[32,16,8],loss_fn,1,nn.ReLU)
+    from utils.model_util import count_parameters
+    print(count_parameters(model))
     model.fit(epochs,lr=0.001,test_d_traid=test_data)
 

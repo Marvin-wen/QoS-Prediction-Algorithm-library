@@ -81,6 +81,22 @@ def nonzero_mean(matrix,nan_symbol):
     t = (m != 0).sum(axis=-1)
     return (m.sum(axis=-1) / t).squeeze()
 
+
+def use_optimizer(network, opt):
+    if opt == 'sgd':
+        optimizer = torch.optim.SGD(network.parameters(),
+                                    lr=0.001,
+                                    momentum=0.99
+                                )
+    elif opt == 'adam':
+        optimizer = torch.optim.Adam(network.parameters(), 
+                                    lr=0.001,
+                                    weight_decay=0.0005)
+    return optimizer
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
 if __name__ == "__main__":
     d_traid = [
         [[1,2,3.2],[[1,1],[2,2],3.2]],

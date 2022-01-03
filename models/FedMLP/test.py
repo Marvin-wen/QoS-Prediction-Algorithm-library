@@ -14,7 +14,7 @@ RESULT FedMLP:
 
 """
 
-freeze_random()  # 冻结随机数 保证结果一致
+# freeze_random()  # 冻结随机数 保证结果一致
 
 for density in [0.05, 0.1, 0.15, 0.2]:
 
@@ -29,7 +29,7 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     test_dataloader = DataLoader(test_dataset, batch_size=64)
 
     lr = 0.001
-    epochs = 100
+    epochs = 3000
     # loss_fn = nn.SmoothL1Loss()
     loss_fn = nn.L1Loss()
 

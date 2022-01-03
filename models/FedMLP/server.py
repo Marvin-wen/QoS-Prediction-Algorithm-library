@@ -6,9 +6,7 @@ class Server:
     """
     def __init__(self) -> None:
         self.params = None
-        self.server_feature_map = {}
     def upgrade(self,params:List[Dict]):
-        print(params)
         o = OrderedDict()
         if len(params) != 0:
             for k,v in params[0].items():

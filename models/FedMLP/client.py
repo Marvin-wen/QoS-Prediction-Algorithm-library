@@ -12,17 +12,16 @@ class Client(object):
     """客户端实体
     """
 
-    def __init__(self, traid, uid, device, model) -> None:
+    def __init__(self, traid, uid, model,device) -> None:
         super().__init__()
         self.traid = traid
-        self.uid = uid
         self.device = device
+        self.uid = uid
         self.model = model
+        self.loss_list = []
         self.n_item = len(traid)
         self.train_loader = DataLoader(
             ToTorchDataset(self.traid), batch_size=128, drop_last=True)
-        self.single_batch = DataLoader(
-            ToTorchDataset(self.traid), batch_size=1, drop_last=True)
 
     def fit(self, params, loss_fn, optimizer, lr, epoch=5):
         total_loss = 0
@@ -42,7 +41,8 @@ class Client(object):
                 train_batch_loss += loss.item()
             loss_per_epoch = train_batch_loss / len(self.train_loader)
             total_loss += loss_per_epoch
-        return self.model.state_dict(),round(total_loss/epoch,4)
+        self.loss_list.append(round(total_loss/epoch,4))
+        return self.model.state_dict(), round(total_loss/epoch,4)
 
 
     def __repr__(self) -> str:
@@ -52,16 +52,13 @@ class Clients(object):
     """多client 的虚拟管理节点
     """
 
-    def __init__(self, traid, model, use_gpu=True) -> None:
+    def __init__(self, traid, model, device) -> None:
         super().__init__()
         self.traid = traid
         self.model = model
-        self.device = ("cuda" if (
-            use_gpu and torch.cuda.is_available()) else "cpu")
-        if use_gpu:
-            self.model.to(self.device)
+        self.device = device
         self.clients_map = {}  # 存储每个client的数据集
-
+        self.client_nums_map = {}
         self._get_clients()
 
     def _get_clients(self):
@@ -71,8 +68,10 @@ class Clients(object):
                 traid_row[1]), float(traid_row[2])
             r[uid].append(traid_row)
         for uid, rows in tqdm(r.items(), desc="Building clients..."):
-            self.clients_map[uid] = Client(rows, uid, self.device, self.model)
+            self.clients_map[uid] = Client(rows, uid, self.model, self.device)
+            self.client_nums_map[uid] = len(rows)
         print(f"Clients Nums:{len(self.clients_map)}")
+        print(f"Nums for client:",self.client_nums_map)
 
 
     def __len__(self):

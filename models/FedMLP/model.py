@@ -75,25 +75,22 @@ class FedMLPModel():
             loss_list = []
 
             s_params = self.server.params if epoch != 0 else self._model.state_dict()
-            # res = set(np.random.choice(list(self.clients.client_nums_map.keys()),int(len(self.clients) * 0.2)))
+            res = set(np.random.choice(list(self.clients.client_nums_map.keys()),128))
+            # res = set(np.random.choice(list(self.clients.client_nums_map.keys()),1))
+
 
             for client_id,client in tqdm(self.clients,desc="Client training"):
-
-                # if client_id not in res:
-                #     continue
-                # s_params = self.server.params if epoch != 0 else self._model.state_dict()
+                if client_id not in res:
+                    continue
                 u_params,loss = client.fit(
                     s_params,self.loss_fn,self.optimizer,lr
                 )
                 collector.append(u_params)
                 loss_list.append(loss)
-                # self.server.upgrade(collector)
 
-            print(f"[{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}")
+            self.logger.info(f"[{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}")
 
             self.server.upgrade(collector)
-
-            print("",self.clients[0].loss_list)
 
             if (epoch+1) % 20 == 0:
                 y_list,y_pred_list = self.predict(test_traid)

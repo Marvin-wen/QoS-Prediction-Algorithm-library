@@ -25,18 +25,17 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     train_dataset = ToTorchDataset(train_data)
     test_dataset = ToTorchDataset(test_data)
 
-    train_dataloader = DataLoader(train_dataset, batch_size=64)
-    test_dataloader = DataLoader(test_dataset, batch_size=64)
+    train_dataloader = DataLoader(train_dataset, batch_size=256)
+    test_dataloader = DataLoader(test_dataset, batch_size=256)
 
-    lr = 0.001
+    lr = 0.01
     epochs = 3000
-    # loss_fn = nn.SmoothL1Loss()
+    # loss_fn = nn.SmoothL1Loss() 
     loss_fn = nn.L1Loss()
 
     dim = 8
 
     mlp = FedMLPModel(train_data, loss_fn, rt_data.row_n, rt_data.col_n, dim=dim)
-    opt = Adam(mlp.parameters(), lr=lr)
 
     mlp.fit(epochs,lr,test_dataloader)
     y, y_pred = mlp.predict(test_dataloader)

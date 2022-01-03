@@ -14,6 +14,7 @@ from utils.model_util import split_d_traid,save_checkpoint
 from utils.evaluation import mae,mse,rmse
 from utils.decorator import timeit
 from utils.model_util import use_optimizer
+from utils.mylogger import TNLog
 
 class FedXXX(nn.Module):
     def __init__(self, user_params, item_params, linear_layers: list, output_dim=1, activation=nn.ReLU) -> None:
@@ -140,6 +141,8 @@ class FedXXXLaunch:
         self.clients = Clients(d_traid, self._model)
         self.optimizer = optimizer
         self.loss_fn = loss_fn
+        self.logger = TNLog(self.name)
+        self.logger.initial_logger()
 
 
     def fit(self, epochs, lr, test_d_traid):
@@ -166,7 +169,7 @@ class FedXXXLaunch:
                 mse_ = mse(y_list, y_pred_list)
                 rmse_ = rmse(y_list, y_pred_list)
 
-                print(f"mae:{mae_},mse:{mse_},rmse:{rmse_}")
+                self.logger.info(f"mae:{mae_},mse:{mse_},rmse:{rmse_}")
 
     # 这里的代码写的很随意 没时间优化了
     def predict(self, d_traid, similarity_th=0.6,w=1,use_gpu=True):

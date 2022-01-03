@@ -21,6 +21,7 @@ from functools import partial
 
 from .model import FedXXXModel
 
+
 """
 RESULT MODEL:
 """
@@ -70,8 +71,8 @@ loss_fn = nn.SmoothL1Loss()
 user_params = {
     "type_":"cat", # embedding层整合方式 stack or cat
     "embedding_nums":u_info.embedding_nums,# 每个要embedding的特征的总个数
-    "embedding_dims":[4,4],
-    "in_size":8, # embedding后接一个全连阶层在进入resnet
+    "embedding_dims":[16,16],
+    "in_size":32, # embedding后接一个全连阶层在进入resnet
     "blocks_sizes":[8,32,16], # 最后的输出是8
     "deepths":[1,1],
     "activation":nn.ReLU,
@@ -81,9 +82,9 @@ user_params = {
 item_params = {
     "type_":"cat", # embedding层整合方式 stack or cat
     "embedding_nums":i_info.embedding_nums,# 每个要embedding的特征的总个数
-    "embedding_dims":[4,4],
-    "in_size":8,
-    "blocks_sizes":[8,32,16], # item最后的输出是8
+    "embedding_dims":[16,16],
+    "in_size":32,
+    "blocks_sizes":[32,16,8], # item最后的输出是8
     "deepths":[1,1],
     "activation":nn.ReLU,
     "block":ResNetBasicBlock
@@ -120,7 +121,7 @@ if not IS_FED:
 else:
     train_data = fed_data_preprocess(train,u_info,i_info)
     test_data = fed_data_preprocess(test,u_info,i_info)
-    model = FedXXXLaunch(train_data,user_params,item_params,[32,16,8],loss_fn,1,nn.ReLU)
+    model = FedXXXLaunch(train_data,user_params,item_params,[16],loss_fn,1,nn.GELU)
     from utils.model_util import count_parameters
     print(count_parameters(model))
     model.fit(epochs,lr=0.001,test_d_traid=test_data)

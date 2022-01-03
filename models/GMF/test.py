@@ -7,12 +7,10 @@ from torch.utils.data import DataLoader
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
 from root import absolute
-from .model import MLPModel
+from .model import GMFModel
 
 """
-RESULT MLP:
-Density:0.05,type:rt,mae:0.4674951136112213,mse:1.8543723821640015,rmse:1.3617534637451172
-
+RESULT GMF:
 """
 
 freeze_random()  # 冻结随机数 保证结果一致
@@ -33,13 +31,14 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     epochs = 100
     loss_fn = nn.SmoothL1Loss()
 
-    dim = 12
+    dim = 8
 
-    mlp = MLPModel(loss_fn, rt_data.row_n, rt_data.col_n, dim=dim)
+    mlp = GMFModel(loss_fn, rt_data.row_n, rt_data.col_n, dim=dim)
     opt = Adam(mlp.parameters(), lr=lr)
 
-    # mlp.fit(train_dataloader,epochs,opt,eval_loader=test_dataloader,save_filename=f"Density:{density}")
-    y, y_pred = mlp.predict(test_dataloader,True,"/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/MLPModel/loss_0.2885.ckpt")
+    mlp.fit(train_dataloader,epochs,opt,eval_loader=test_dataloader)
+    y, y_pred = mlp.predict(test_dataloader)
+    
     mae_ = mae(y, y_pred)
     mse_ = mse(y, y_pred)
     rmse_ = rmse(y, y_pred)

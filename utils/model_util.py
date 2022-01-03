@@ -56,11 +56,9 @@ def traid_to_matrix(traid,nan_symbol=-1):
     """三元组转矩阵
 
     Args:
-        traid ([type]): [description]
-        nan_symbol (int, optional): [description]. Defaults to -1.
+        traid : 三元组
+        nan_symbol : 非零数据的表示方法. Defaults to -1.
 
-    Returns:
-        [type]: [description]
     """
     # 注意下标应该为int
     if not isinstance(traid,np.ndarray):
@@ -76,6 +74,8 @@ def split_d_traid(d_traid):
     return np.array(l[:,0].tolist()), l[:,1].tolist()
 
 def nonzero_mean(matrix,nan_symbol):
+    """快速计算一个矩阵的行均值
+    """
     m = copy.deepcopy(matrix)
     m[matrix==nan_symbol] = 0
     t = (m != 0).sum(axis=-1)

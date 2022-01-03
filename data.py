@@ -13,6 +13,8 @@ from utils.decorator import cache4method
 from functools import wraps
 
 class ToTorchDataset(Dataset):
+    """将一个三元组转成Torch Dataset的形式
+    """
     def __init__(self,traid) -> None:
         super().__init__()
         self.traid = traid
@@ -46,6 +48,8 @@ class DatasetBase(object):
     
 
 class InfoDataset(DatasetBase):
+    """用户和服务的详细描述数据
+    """
     def __init__(self, type_, enabled_columns:list) -> None:
         self.type = type_
         super().__init__(type_)
@@ -60,8 +64,8 @@ class InfoDataset(DatasetBase):
     
     def _fit(self):
         assert self._is_available_columns == True,f"{self.enabled_columns} is not a subset of {self.info_data.columns().tolist()}"
-        self.feature2idx = {}
-        self.feature2num = {}
+        self.feature2idx = {} # 为某一个特征所有可能的值编号
+        self.feature2num = {} # 
         for column in tqdm(self.enabled_columns,desc="Preparing..."):
             vc = self.info_data[column].value_counts()
             self.feature2idx[column] = {k:idx for idx,(k,v) in enumerate(vc.to_dict().items())}

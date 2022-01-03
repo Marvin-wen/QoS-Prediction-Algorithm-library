@@ -1,9 +1,10 @@
 import torch
 from torch import nn
+from models.base import ModelBase
 
-class GMFModel(nn.Module):
+class GMF(nn.Module):
     def __init__(self,n_user,n_item,dim=8,output_dim=1) -> None:
-        super(GMFModel,self).__init__()
+        super(GMF,self).__init__()
 
         self.num_users = n_user
         self.num_items = n_item
@@ -22,3 +23,17 @@ class GMFModel(nn.Module):
         element_product = torch.mul(user_embedding,item_embedding)
         x = self.fc_output(element_product)
         return x
+
+
+class GMFModel(ModelBase):
+    def __init__(self,loss_fn,n_user,n_item,dim=8, output_dim=1, use_gpu=True):
+        super().__init__(loss_fn,use_gpu)
+        self.model = GMF(n_user,n_item,dim,output_dim)
+        if use_gpu:
+            self.model.to(self.device)
+        
+    def parameters(self):
+        return self.model.parameters()
+
+    def __repr__(self) -> str:
+        return str(self.model)

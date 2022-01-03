@@ -17,7 +17,7 @@ class UPCCModel(object):
         
     
     def _get_similarity_matrix(self,matrix):
-        """获取相似矩阵
+        """获取相似矩阵,暂时只支持PCC
 
         Args:
             matrix (): 由三元组转换得到的矩阵
@@ -29,13 +29,13 @@ class UPCCModel(object):
         n_users = matrix.shape[0]
         similarity_matrix = np.zeros((n_users,n_users)) # 任意两个用户之间的相似度
         # 这里复杂度还是有点高
-        for i in tqdm(range(n_users)):
+        for i in tqdm(range(n_users),desc="生成相似度矩阵"):
             row_i = _m[i]
             nonzero_i = np.nonzero(row_i)[0]
             for j in range(i+1,n_users):
                 row_j = _m[j]
                 nonzero_j = np.nonzero(row_j)[0]
-                intersect = np.intersect1d(nonzero_i,nonzero_j)
+                intersect = np.intersect1d(nonzero_i,nonzero_j) # 两个用户的交集
                 if len(intersect) == 0:
                     sim = 0
                 else:
@@ -71,7 +71,7 @@ class UPCCModel(object):
     def fit(self,traid):
         self.matrix = traid_to_matrix(traid,self._nan_symbol) # 三元组转矩阵
         self.similarity_matrix = self._get_similarity_matrix(self.matrix) # 根据矩阵获取相似矩阵
-        self.u_mean = nonzero_mean(self.matrix,self._nan_symbol)
+        self.u_mean = nonzero_mean(self.matrix,self._nan_symbol) # 算好均值
 
     def predict(self,traid,topK=-1):
         y_list = []
@@ -79,7 +79,7 @@ class UPCCModel(object):
         cold_boot_cnt = 0
         assert self.u_mean is not None,"Please fit first e.g. model.fit()"
 
-        for row in tqdm(traid):
+        for row in tqdm(traid,desc="Predict... "):
             uid,iid,rate = int(row[0]),int(row[1]),float(row[2])
             if uid + 1 > len(self.u_mean):
                 cold_boot_cnt += 1 # 冷启动
@@ -88,17 +88,18 @@ class UPCCModel(object):
             similarity_users = self._get_similarity_users(uid,topK)
             up = 0
             down = 0
+            # 对于当前用户的每一个相似用户
             for s_uid in similarity_users:
-                s_r_ui = self.matrix[s_uid][iid] # 相邻用户对目标item访问的值
+                s_r_ui = self.matrix[s_uid][iid] # 相似用户对目标item访问的值
                 sim = self.get_similarity(uid,s_uid)
                 if s_r_ui == self._nan_symbol or sim <= 0:
                     continue
                 diff = s_r_ui - self.u_mean[s_uid]
-                up += sim * diff
-                down += sim
+                up += sim * diff  # 分子
+                down += sim # 分母
                 
             if down != 0:
-                y_pred = up / down + u_mean
+                y_pred = u_mean + up / down 
             else:
                 y_pred = u_mean
 

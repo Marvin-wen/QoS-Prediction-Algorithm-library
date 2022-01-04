@@ -5,6 +5,7 @@ from threading import stack_size
 import numpy as np
 import torch
 from data import ToTorchDataset
+from models.base import ClientBase
 from torch._C import ScriptFunction
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -12,46 +13,28 @@ from utils.model_util import (nonzero_mean, split_d_traid, traid_to_matrix,
                               use_optimizer)
 
 
-class Client(object):
+class Client(ClientBase):
     """客户端实体
     """
-    def __init__(self, traid, uid, model, device) -> None:
+    def __init__(self, traid, uid, model, device, batch_size=-1) -> None:
+        """客户端调用fit进行训练
 
-        super().__init__()
+        Args:
+            traid: 三元组
+            batch_size : local 训练的bs, 默认10, -1表示
+        """
+
+        super().__init__(device, model)
         self.traid = traid
-        self.device = device
         self.uid = uid
-        self.model = model
         self.loss_list = []
         self.n_item = len(traid)
-        self.train_loader = DataLoader(ToTorchDataset(self.traid),
-                                       batch_size=10)
+        self.batch_size = batch_size if batch_size != -1 else self.n_item
+        self.data_loader = DataLoader(ToTorchDataset(self.traid),
+                                      batch_size=self.batch_size)
 
-    def fit(self, params, loss_fn, optimizer, lr, epoch=5):
-        total_loss = 0
-        self.model.load_state_dict(params)
-        self.model.train()
-        self.model.to(self.device)
-        opt = optimizer(self.model.parameters(), lr)
-        for i in range(epoch):
-            train_batch_loss = 0
-            for batch_id, batch in enumerate(self.train_loader):
-                user, item, rating = batch[0].to(self.device), batch[1].to(
-                    self.device), batch[2].to(self.device)
-
-                y_real = rating.reshape(-1, 1)
-                opt.zero_grad()
-                y_pred = self.model(user, item)
-                loss = loss_fn(y_pred, y_real)
-                loss.backward()
-                opt.step()
-                train_batch_loss += loss.item()
-
-            loss_per_epoch = train_batch_loss / len(self.train_loader)
-            self.loss_list.append(loss_per_epoch)
-            total_loss += loss_per_epoch
-
-        return self.model.state_dict(), round(total_loss / epoch, 4)
+    def fit(self, params, loss_fn, optimizer: str, lr, epochs=5):
+        return super().fit(params, loss_fn, optimizer, lr, epochs=epochs)
 
     def __repr__(self) -> str:
         return f"Client(uid={self.uid})"

@@ -71,7 +71,7 @@ class FedMLPModel():
                  layers=[32, 16, 8],
                  output_dim=1,
                  use_gpu=True,
-                 optimizer=Adam) -> None:
+                 optimizer="adam") -> None:
         self.device = ("cuda" if
                        (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = __class__.__name__
@@ -137,7 +137,7 @@ class FedMLPModel():
 
             print(list(self.clients[0].loss_list))
 
-            if (epoch + 1) % 10 == 0:
+            if (epoch + 1) % 50 == 0:
                 y_list, y_pred_list = self.predict(test_traid)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)

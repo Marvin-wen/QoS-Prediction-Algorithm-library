@@ -25,7 +25,7 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     train_dataset = ToTorchDataset(train_data)
     test_dataset = ToTorchDataset(test_data)
 
-    test_dataloader = DataLoader(test_dataset, batch_size=256)
+    test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
     lr = 0.01
     epochs = 3000

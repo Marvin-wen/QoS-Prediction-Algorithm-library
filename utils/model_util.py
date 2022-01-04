@@ -90,11 +90,11 @@ def nonzero_mean(matrix, nan_symbol):
 def use_optimizer(network, opt):
     if opt == 'sgd':
         optimizer = torch.optim.SGD(network.parameters(),
-                                    lr=0.001,
+                                    lr=0.01,
                                     momentum=0.99)
     elif opt == 'adam':
         optimizer = torch.optim.Adam(network.parameters(),
-                                     lr=0.001,
+                                     lr=0.01,
                                      weight_decay=0.0005)
     return optimizer
 

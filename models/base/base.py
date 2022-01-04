@@ -1,3 +1,5 @@
+
+
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -165,24 +167,3 @@ class MemoryBase(object):
     def train():
         raise NotImplementedError
 
-
-class ClientBase(object):
-    def __init__(self, device) -> None:
-        self.device = device
-        super().__init__()
-
-    def fit(self, params, loss_fn, optimizer, lr, epoch=5):
-        for i in range(epoch):
-            self.model.load_state_dict(params)
-            opt = optimizer(self.model.parameters(), lr)
-            for batch_id, batch in enumerate(self.train_loader):
-                user, item, rating = batch[0].to(self.device), batch[1].to(
-                    self.device), batch[2].to(self.device)
-                # print(user, item, rating)
-                y_real = rating.reshape(-1, 1)
-                opt.zero_grad()
-                y_pred = self.model(user, item)
-                loss = loss_fn(y_pred, y_real)
-                loss.backward()
-                opt.step()
-        return self.model.state_dict(), loss

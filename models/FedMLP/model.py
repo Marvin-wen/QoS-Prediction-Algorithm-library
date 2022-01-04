@@ -17,7 +17,12 @@ from .server import Server
 
 
 class FedMLP(nn.Module):
-    def __init__(self, n_user, n_item, dim, layers=[32, 16, 8], output_dim=1) -> None:
+    def __init__(self,
+                 n_user,
+                 n_item,
+                 dim,
+                 layers=[32, 16, 8],
+                 output_dim=1) -> None:
         """
         Args:
             n_user ([type]): 用户数量
@@ -31,10 +36,10 @@ class FedMLP(nn.Module):
         self.num_items = n_item
         self.latent_dim = dim
 
-        self.embedding_user = nn.Embedding(
-            num_embeddings=self.num_users, embedding_dim=self.latent_dim)
-        self.embedding_item = nn.Embedding(
-            num_embeddings=self.num_items, embedding_dim=self.latent_dim)
+        self.embedding_user = nn.Embedding(num_embeddings=self.num_users,
+                                           embedding_dim=self.latent_dim)
+        self.embedding_item = nn.Embedding(num_embeddings=self.num_items,
+                                           embedding_dim=self.latent_dim)
 
         self.fc_layers = nn.ModuleList()
         # MLP的第一层为latent vec的cat
@@ -57,12 +62,20 @@ class FedMLP(nn.Module):
 
 
 class FedMLPModel():
-    def __init__(self, traid, loss_fn, n_user, n_item, dim, layers=[32, 16, 8], output_dim=1, use_gpu=True, optimizer=Adam) -> None:
-        self.device = ("cuda" if (
-            use_gpu and torch.cuda.is_available()) else "cpu")
+    def __init__(self,
+                 traid,
+                 loss_fn,
+                 n_user,
+                 n_item,
+                 dim,
+                 layers=[32, 16, 8],
+                 output_dim=1,
+                 use_gpu=True,
+                 optimizer=Adam) -> None:
+        self.device = ("cuda" if
+                       (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = __class__.__name__
-        self._model = FedMLP(n_user, n_item,
-                             dim, layers, output_dim)
+        self._model = FedMLP(n_user, n_item, dim, layers, output_dim)
 
         self.server = Server()
         self.clients = Clients(traid, self._model, self.device)
@@ -83,8 +96,8 @@ class FedMLPModel():
         selected_total_size = 0  # client数据集总数
 
         for uid in tqdm(sampled_client_indices, desc="Client training"):
-            s_params, loss = self.clients[uid].fit(
-                s_params, self.loss_fn, self.optimizer, lr)
+            s_params, loss = self.clients[uid].fit(s_params, self.loss_fn,
+                                                   self.optimizer, lr)
             collector.append(s_params)
             client_loss.append(loss)
             selected_total_size += self.clients[uid].n_item
@@ -99,7 +112,8 @@ class FedMLPModel():
         for epoch in tqdm(range(epochs), desc="Training Epochs"):
 
             # 0. Get params from server
-            s_params = self.server.params if epoch != 0 else self._model.state_dict()
+            s_params = self.server.params if epoch != 0 else self._model.state_dict(
+            )
 
             # 1. Select some clients
             sampled_client_indices = self.clients.sample_clients(fraction)
@@ -109,18 +123,21 @@ class FedMLPModel():
                 sampled_client_indices, lr, s_params)
 
             # 3. Update params to Server
-            mixing_coefficients = [self.clients[idx].n_item /
-                                   selected_total_size for idx in sampled_client_indices]
+            mixing_coefficients = [
+                self.clients[idx].n_item / selected_total_size
+                for idx in sampled_client_indices
+            ]
             self._check(mixing_coefficients)
-            self.server.upgrade_wich_cefficients(
-                collector, mixing_coefficients)
+            self.server.upgrade_wich_cefficients(collector,
+                                                 mixing_coefficients)
 
             self.logger.info(
-                f"[{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}")
+                f"[{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}"
+            )
 
             print(list(self.clients[0].loss_list))
 
-            if (epoch+1) % 10 == 0:
+            if (epoch + 1) % 10 == 0:
                 y_list, y_pred_list = self.predict(test_traid)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)
@@ -136,7 +153,8 @@ class FedMLPModel():
         y_list = []
         self._model.eval()
         with torch.no_grad():
-            for batch_id, batch in tqdm(enumerate(test_loader), desc="Model Predict"):
+            for batch_id, batch in tqdm(enumerate(test_loader),
+                                        desc="Model Predict"):
                 user, item, rate = batch[0].to(self.device), batch[1].to(
                     self.device), batch[2].to(self.device)
                 y_pred = self._model(user, item).squeeze()

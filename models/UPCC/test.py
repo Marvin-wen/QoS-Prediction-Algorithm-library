@@ -3,7 +3,6 @@ from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
 
 from .model import UPCCModel
-
 """
 RESULT UPCC:
 Density:0.05,type:rt,mae:0.7334384829325753,mse:2.6762234507993745,rmse:1.635916700446381
@@ -17,24 +16,20 @@ Density:0.15,type:tp,mae:22.348603068910084,mse:3475.7766495526553,rmse:58.95571
 Density:0.2,type:tp,mae:21.212877869416783,mse:3153.9556887043786,rmse:56.16008982101416
 """
 
-freeze_random() # 冻结随机数 保证结果一致
+freeze_random()  # 冻结随机数 保证结果一致
 
-for density in [0.05,0.1,0.15,0.2]:
+for density in [0.05, 0.1, 0.15, 0.2]:
 
     type_ = "rt"
     rt_data = MatrixDataset(type_)
-    train_data,test_data = rt_data.split_train_test(density)
-
+    train_data, test_data = rt_data.split_train_test(density)
 
     umean = UPCCModel()
     umean.fit(train_data)
-    y,y_pred = umean.predict(test_data,20)
+    y, y_pred = umean.predict(test_data, 20)
 
-
-    mae_ = mae(y,y_pred)
-    mse_ = mse(y,y_pred)
-    rmse_ = rmse(y,y_pred)
+    mae_ = mae(y, y_pred)
+    mse_ = mse(y, y_pred)
+    rmse_ = rmse(y, y_pred)
 
     print(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
-
-

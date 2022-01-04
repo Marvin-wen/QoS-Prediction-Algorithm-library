@@ -1,1 +1,1 @@
-from .base import MemoryBase,ModelBase
+from .base import MemoryBase, ModelBase

@@ -3,19 +3,21 @@ import os
 import random
 import shutil
 
-import torch
-from torch import nn
 import numpy as np
+import torch
 import torch.nn.init as init
 from root import absolute
 from scipy.sparse.construct import rand
-
+from torch import nn
 """
     Some handy functions for model training ...
 """
 
 
-def save_checkpoint(state, is_best, save_dirname="output", save_filename="best_model.ckpt"):
+def save_checkpoint(state,
+                    is_best,
+                    save_dirname="output",
+                    save_filename="best_model.ckpt"):
     """Save checkpoint if a new best is achieved"""
     if not os.path.isdir(absolute(save_dirname)):
         os.makedirs(absolute(save_dirname))
@@ -66,7 +68,7 @@ def traid_to_matrix(traid, nan_symbol=-1):
         traid = np.array(traid)
     x_max = traid[:, 0].max().astype(int)
     y_max = traid[:, 1].max().astype(int)
-    matrix = np.full((x_max+1, y_max+1), nan_symbol, dtype=traid.dtype)
+    matrix = np.full((x_max + 1, y_max + 1), nan_symbol, dtype=traid.dtype)
     matrix[traid[:, 0].astype(int), traid[:, 1].astype(int)] = traid[:, 2]
     return matrix
 
@@ -89,8 +91,7 @@ def use_optimizer(network, opt):
     if opt == 'sgd':
         optimizer = torch.optim.SGD(network.parameters(),
                                     lr=0.001,
-                                    momentum=0.99
-                                    )
+                                    momentum=0.99)
     elif opt == 'adam':
         optimizer = torch.optim.Adam(network.parameters(),
                                      lr=0.001,
@@ -118,7 +119,8 @@ def init_weights(model, init_type, init_gain):
     """
     def init_func(m):
         classname = m.__class__.__name__
-        if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
+        if hasattr(m, 'weight') and (classname.find('Conv') != -1
+                                     or classname.find('Linear') != -1):
             if init_type == 'normal':
                 init.normal_(m.weight.data, 0.0, init_gain)
             elif init_type == 'xavier':
@@ -127,13 +129,16 @@ def init_weights(model, init_type, init_gain):
                 init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
             else:
                 raise NotImplementedError(
-                    f'[ERROR] ...initialization method [{init_type}] is not implemented!')
+                    f'[ERROR] ...initialization method [{init_type}] is not implemented!'
+                )
             if hasattr(m, 'bias') and m.bias is not None:
                 init.constant_(m.bias.data, 0.0)
 
-        elif classname.find('BatchNorm2d') != -1 or classname.find('InstanceNorm2d') != -1:
+        elif classname.find('BatchNorm2d') != -1 or classname.find(
+                'InstanceNorm2d') != -1:
             init.normal_(m.weight.data, 1.0, init_gain)
             init.constant_(m.bias.data, 0.0)
+
     model.apply(init_func)
 
 
@@ -150,7 +155,7 @@ def init_net(model, init_type, init_gain, gpu_ids):
         An initialized torch.nn.Module instance.
     """
     if len(gpu_ids) > 0:
-        assert(torch.cuda.is_available())
+        assert (torch.cuda.is_available())
         model.to(gpu_ids[0])
         model = nn.DataParallel(model, gpu_ids)
     init_weights(model, init_type, init_gain)
@@ -158,13 +163,10 @@ def init_net(model, init_type, init_gain, gpu_ids):
 
 
 if __name__ == "__main__":
-    d_traid = [
-        [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
-        [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
-        [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
-        [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]]
-
-    ]
+    d_traid = [[[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
+               [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
+               [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
+               [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]]]
     a, b = split_d_traid(d_traid)
     t2m = traid_to_matrix(a)
     print(t2m)

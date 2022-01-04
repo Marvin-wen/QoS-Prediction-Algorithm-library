@@ -1,14 +1,14 @@
 import torch
 from data import MatrixDataset, ToTorchDataset
+from root import absolute
 from torch import nn, optim
 from torch.nn.modules import loss
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
-from root import absolute
-from .model import GMFModel
 
+from .model import GMFModel
 """
 RESULT GMF:
 """
@@ -36,9 +36,9 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     mlp = GMFModel(loss_fn, rt_data.row_n, rt_data.col_n, dim=dim)
     opt = Adam(mlp.parameters(), lr=lr)
 
-    mlp.fit(train_dataloader,epochs,opt,eval_loader=test_dataloader)
+    mlp.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader)
     y, y_pred = mlp.predict(test_dataloader)
-    
+
     mae_ = mae(y, y_pred)
     mse_ = mse(y, y_pred)
     rmse_ = rmse(y, y_pred)

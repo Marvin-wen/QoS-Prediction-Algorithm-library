@@ -5,7 +5,6 @@ from typing import Dict, List
 class Server:
     """服务端只做模型参数的融合
     """
-
     def __init__(self) -> None:
         self.params = None
         self.server_feature_map = {}

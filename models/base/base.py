@@ -11,13 +11,20 @@ class ModelBase(object):
         super().__init__()
         self.loss_fn = loss_fn  # 损失函数
         self.tb = SummaryWriter()
-        self.device = ("cuda" if (
-            use_gpu and torch.cuda.is_available()) else "cpu")
+        self.device = ("cuda" if
+                       (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = self.__class__.__name__
         self.logger = TNLog(self.name)  # 日志
         self.logger.initial_logger()
 
-    def fit(self, train_loader, epochs, optimizer, eval_=True, eval_loader=None, save_model=False, save_filename=""):
+    def fit(self,
+            train_loader,
+            epochs,
+            optimizer,
+            eval_=True,
+            eval_loader=None,
+            save_model=False,
+            save_filename=""):
         """Eval 为True自动保存最优模型（推荐），save_model为True间隔epoch后自动保存模型
 
         Args:
@@ -67,13 +74,14 @@ class ModelBase(object):
                     self.model.eval()
                     with torch.no_grad():
                         for batch_id, batch in tqdm(enumerate(eval_loader)):
-                            user, item, rating = batch[0].to(self.device), batch[1].to(
-                                self.device), batch[2].to(self.device)
+                            user, item, rating = batch[0].to(
+                                self.device), batch[1].to(
+                                    self.device), batch[2].to(self.device)
                             y_pred = self.model(user, item)
                             y_real = rating.reshape(-1, 1)
                             loss = self.loss_fn(y_pred, y_real)
                             eval_total_loss += loss.item()
-                        loss_per_epoch = eval_total_loss/len(eval_loader)
+                        loss_per_epoch = eval_total_loss / len(eval_loader)
                         if best_loss is None:
                             best_loss = loss_per_epoch
                             is_best = True
@@ -89,24 +97,25 @@ class ModelBase(object):
                         if is_best:
                             ckpt = {
                                 "model": self.model.state_dict(),
-                                "epoch": epoch+1,
+                                "epoch": epoch + 1,
                                 "optim": optimizer.state_dict(),
                                 "best_loss": best_loss
                             }
                         else:
                             ckpt = {}
-                        save_checkpoint(
-                            ckpt, is_best, f"output/{self.name}", f"loss_{best_loss:.4f}.ckpt")
+                        save_checkpoint(ckpt, is_best, f"output/{self.name}",
+                                        f"loss_{best_loss:.4f}.ckpt")
 
                 elif save_model:
                     ckpt = {
                         "model": self.model.state_dict(),
-                        "epoch": epoch+1,
+                        "epoch": epoch + 1,
                         "optim": optimizer.state_dict(),
                         "best_loss": loss_per_epoch
                     }
                     save_checkpoint(
-                        ckpt, save_model, f"output/{self.name}", f"{save_filename}_loss_{loss_per_epoch:.4f}.ckpt")
+                        ckpt, save_model, f"output/{self.name}",
+                        f"{save_filename}_loss_{loss_per_epoch:.4f}.ckpt")
 
     def predict(self, test_loader, resume=False, path=None):
         """模型预测
@@ -125,7 +134,8 @@ class ModelBase(object):
             ckpt = load_checkpoint(path)
             self.model.load_state_dict(ckpt['model'])
             self.logger.info(
-                f"last checkpoint restored! ckpt: loss {ckpt['best_loss']:.4f} Epoch {ckpt['epoch']}")
+                f"last checkpoint restored! ckpt: loss {ckpt['best_loss']:.4f} Epoch {ckpt['epoch']}"
+            )
 
         self.model.eval()
         with torch.no_grad():
@@ -141,7 +151,8 @@ class ModelBase(object):
                 y_pred_list.append(y_pred)
                 y_list.append(y_real)
 
-        return torch.cat(y_list).cpu().numpy(), torch.cat(y_pred_list).cpu().numpy()
+        return torch.cat(y_list).cpu().numpy(), torch.cat(
+            y_pred_list).cpu().numpy()
 
 
 class MemoryBase(object):
@@ -156,10 +167,10 @@ class MemoryBase(object):
 
 
 class ClientBase(object):
-    def __init__(self,device) -> None:
+    def __init__(self, device) -> None:
         self.device = device
         super().__init__()
-    
+
     def fit(self, params, loss_fn, optimizer, lr, epoch=5):
         for i in range(epoch):
             self.model.load_state_dict(params)
@@ -174,4 +185,4 @@ class ClientBase(object):
                 loss = loss_fn(y_pred, y_real)
                 loss.backward()
                 opt.step()
-        return self.model.state_dict(),loss
+        return self.model.state_dict(), loss

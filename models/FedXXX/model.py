@@ -1,20 +1,23 @@
 import collections
-import torch
-from torch import nn
+
 import numpy as np
-from torch.optim.adam import Adam
-from torch.utils.data.dataloader import DataLoader
+import torch
 from data import ToTorchDataset
 from models.base.base import ModelBase
-from .utils import ResNetEncoder, ResNetBasicBlock
+from torch import nn
+from torch.optim.adam import Adam
+from torch.utils.data.dataloader import DataLoader
+from tqdm import tqdm
+
+from utils.decorator import timeit
+from utils.evaluation import mae, mse, rmse
+from utils.model_util import save_checkpoint, split_d_traid, use_optimizer
+from utils.mylogger import TNLog
+
 from .client import Clients
 from .server import Server
-from tqdm import tqdm
-from utils.model_util import split_d_traid,save_checkpoint
-from utils.evaluation import mae,mse,rmse
-from utils.decorator import timeit
-from utils.model_util import use_optimizer
-from utils.mylogger import TNLog
+from .utils import ResNetBasicBlock, ResNetEncoder
+
 
 class FedXXX(nn.Module):
     def __init__(self, user_params, item_params, linear_layers: list, output_dim=1, activation=nn.ReLU) -> None:
@@ -144,7 +147,6 @@ class FedXXXLaunch:
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
 
-
     def fit(self, epochs, lr, test_d_traid):
         for epoch in tqdm(range(epochs), desc="Epochs "):
             collector = []
@@ -154,7 +156,7 @@ class FedXXXLaunch:
             # 参数解密 pending...
             for client_id, client in tqdm(self.clients, desc="Client training"):
                 # 2. 用户本地训练产生新参数
-                u_params,loss = client.fit(
+                u_params, loss = client.fit(
                     s_params, self.loss_fn, self.optimizer, lr)
                 collector.append(u_params)
                 loss_list.append(loss)
@@ -163,8 +165,9 @@ class FedXXXLaunch:
 
             if (epoch+1) % 10 == 0:
                 for client_id, client in tqdm(self.clients, desc="Client uploading features"):
-                    self.clients.clients_feature_map[client_id] = client.upload_feature(s_params)
-                y_list,y_pred_list = self.predict(test_d_traid)
+                    self.clients.clients_feature_map[client_id] = client.upload_feature(
+                        s_params)
+                y_list, y_pred_list = self.predict(test_d_traid)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)
                 rmse_ = rmse(y_list, y_pred_list)
@@ -172,7 +175,7 @@ class FedXXXLaunch:
                 self.logger.info(f"mae:{mae_},mse:{mse_},rmse:{rmse_}")
 
     # 这里的代码写的很随意 没时间优化了
-    def predict(self, d_traid, similarity_th=0.6,w=1,use_gpu=True):
+    def predict(self, d_traid, similarity_th=0.6, w=1, use_gpu=True):
         self.device = ("cuda" if (
             use_gpu and torch.cuda.is_available()) else "cpu")
         s_params = self.server.params
@@ -180,17 +183,19 @@ class FedXXXLaunch:
         y_pred_list = []
         y_list = []
         traid, p_traid = split_d_traid(d_traid)
-        p_traid_dataloader = DataLoader(ToTorchDataset(p_traid),batch_size=256) # 这里可以优化 这样写不是很好
+        p_traid_dataloader = DataLoader(ToTorchDataset(
+            p_traid), batch_size=256)  # 这里可以优化 这样写不是很好
         similarity_matrix = self.clients.get_similarity_matrix()
 
         def upcc():
 
             total_similarity = 0
             up = 0
-            for idx,val in enumerate(similarity_matrix[uid]):
-                if uid == idx or val < similarity_th or self.clients.query_rate(idx,iid) == -1:
+            for idx, val in enumerate(similarity_matrix[uid]):
+                if uid == idx or val < similarity_th or self.clients.query_rate(idx, iid) == -1:
                     continue
-                up += val * (self.clients.query_rate(idx,iid) - self.clients.query_mean(idx))
+                up += val * (self.clients.query_rate(idx, iid) -
+                             self.clients.query_mean(idx))
                 total_similarity += val
             if total_similarity != 0:
                 return up / total_similarity
@@ -200,11 +205,11 @@ class FedXXXLaunch:
         self._model.eval()
         with torch.no_grad():
             # for batch_id, batch in tqdm(enumerate(test_loader)):
-            for batch_id,batch in tqdm(enumerate(p_traid_dataloader), desc="Model Predict"):
-                user,item,rate = batch[0].to(self.device), batch[1].to(
+            for batch_id, batch in tqdm(enumerate(p_traid_dataloader), desc="Model Predict"):
+                user, item, rate = batch[0].to(self.device), batch[1].to(
                     self.device), batch[2].to(self.device)
-                y_pred = self._model(user,item).squeeze()
-                if len(y_pred.shape) == 0: # 64一batch导致变成了标量
+                y_pred = self._model(user, item).squeeze()
+                if len(y_pred.shape) == 0:  # 64一batch导致变成了标量
                     y_pred = y_pred.unsqueeze(dim=0)
                 y_pred_list.append(y_pred)
             y_pred_list = torch.cat(y_pred_list).cpu().numpy()
@@ -218,7 +223,7 @@ class FedXXXLaunch:
 
             y_p_s_l = np.array(y_pred_sim_list)
             sim_pred = w * y_pred_list + (1-w) * y_p_s_l
-        return y_list,sim_pred
+        return y_list, sim_pred
 
     def parameters(self):
         return self._model.parameters()

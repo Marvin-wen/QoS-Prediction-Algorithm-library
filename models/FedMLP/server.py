@@ -9,7 +9,7 @@ class Server:
     def __init__(self) -> None:
         self.params = None
 
-    def upgrade(self, params: List[Dict], coefficients: Dict):
+    def upgrade_wich_cefficients(self, params: List[Dict], coefficients: Dict):
 
         o = OrderedDict()
         if len(params) != 0:
@@ -22,7 +22,7 @@ class Server:
                         o[k] += coefficients[it] * param[k]
             self.params = o
 
-    def upgrade2(self,params:List[Dict]):
+    def upgrade_average(self,params:List[Dict]):
             o = OrderedDict()
             if len(params) != 0:
                 for k,v in params[0].items():

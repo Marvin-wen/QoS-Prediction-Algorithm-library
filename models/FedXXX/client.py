@@ -39,7 +39,7 @@ class Client(object):
                 loss = loss_fn(y_pred, y_real)
                 loss.backward()
                 opt.step()
-        return self.model.state_dict(),loss
+        return self.model.state_dict(), loss
 
     def upload_feature(self, params):
         self.model.load_state_dict(params)
@@ -103,18 +103,16 @@ class Clients(object):
                 return self.u_mean[uid]
         except Exception:
             return None
-    # https://stackoverflow.com/questions/16626789/functools-partial-on-class-method 
+    # https://stackoverflow.com/questions/16626789/functools-partial-on-class-method
     # The code below is wrong!
     # def query_rate(self):
     #     return partial(self._query, self=self, type_="rate")
 
+    def query_rate(self, uid, iid):
+        return self._query(uid, iid, "rate")
 
-
-    def query_rate(self,uid,iid):
-        return self._query(uid,iid,"rate")
-
-    def query_mean(self,uid):
-        return self._query(uid,None,"mean")
+    def query_mean(self, uid):
+        return self._query(uid, None, "mean")
 
     def __len__(self):
         return len(self.clients_map)

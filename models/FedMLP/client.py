@@ -1,6 +1,8 @@
 from collections import OrderedDict, defaultdict
+from threading import stack_size
 
 import torch
+from torch._C import ScriptFunction
 from tqdm import tqdm
 import numpy as np
 from data import ToTorchDataset
@@ -13,6 +15,7 @@ class Client(object):
     """
 
     def __init__(self, traid, uid, model,device) -> None:
+  
         super().__init__()
         self.traid = traid
         self.device = device
@@ -27,12 +30,14 @@ class Client(object):
         total_loss = 0
         self.model.load_state_dict(params)
         self.model.train()
+        self.model.to(self.device)
         opt = optimizer(self.model.parameters(), lr)
         for i in range(epoch):
             train_batch_loss = 0
             for batch_id, batch in enumerate(self.train_loader):
                 user, item, rating = batch[0].to(self.device), batch[1].to(
                     self.device), batch[2].to(self.device)
+
                 y_real = rating.reshape(-1, 1)
                 opt.zero_grad()
                 y_pred = self.model(user, item)
@@ -62,7 +67,16 @@ class Clients(object):
         self.device = device
         self.clients_map = {}  # 存储每个client的数据集
         self.client_nums_map = {}
+
         self._get_clients()
+
+    def sample_clients(self,fraction):
+        """Select some fraction of all clients."""
+        num_clients = len(self.clients_map)
+        num_sampled_clients = max(int(fraction * num_clients), 1)
+        sampled_client_indices = sorted(np.random.choice(a=[k for k,v in self.clients_map.items()], size=num_sampled_clients, replace=False).tolist())
+        return sampled_client_indices
+
 
     def _get_clients(self):
         r = defaultdict(list)

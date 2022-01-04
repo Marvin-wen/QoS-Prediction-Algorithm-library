@@ -1,4 +1,5 @@
 from collections import UserDict
+from numpy.lib.function_base import select
 from pandas.io.parsers import read_table
 import torch
 from torch import nn
@@ -6,6 +7,7 @@ from tqdm import tqdm
 from .client import Clients
 from .server import Server
 from torch.optim.adam import Adam
+from torch.optim.sgd import SGD
 from utils.mylogger import TNLog
 from utils.evaluation import mae,mse,rmse
 import random
@@ -50,15 +52,14 @@ class FedMLP(nn.Module):
 
 
 class FedMLPModel():
-    def __init__(self, traid, loss_fn, n_user, n_item, dim, layers=[3], output_dim=1,use_gpu=True,optimizer=Adam) -> None:
+    def __init__(self, traid, loss_fn, n_user, n_item, dim, layers=[32,16,8], output_dim=1,use_gpu=True,optimizer=Adam) -> None:
         self.use_gpu = use_gpu
         self.device = ("cuda" if (
             use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = __class__.__name__
         self._model = FedMLP(n_user, n_item,
                              dim, layers, output_dim)
-        if use_gpu:
-            self._model.to(self.device)
+        self._model.to(self.device)
         self.server = Server()
         self.clients = Clients(traid, self._model, self.device)
         self.optimizer = optimizer
@@ -66,33 +67,48 @@ class FedMLPModel():
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
 
-
+    def _check(self,iterator):
+        print(abs(sum(iterator) - 1))
+        assert abs(sum(iterator) - 1) <= 1e-4 
     
     def fit(self,epochs,lr,test_traid):
         for epoch in tqdm(range(epochs),desc="Training Epochs"):
 
             collector = []
             loss_list = []
+            coefficients = []
+            total_data_nums = 0
 
             s_params = self.server.params if epoch != 0 else self._model.state_dict()
-            res = set(np.random.choice(list(self.clients.client_nums_map.keys()),128))
+            
+            # res = set(np.random.choice(list(self.clients.client_nums_map.keys()),int(len(self.clients)*0.33)))
             # res = set(np.random.choice(list(self.clients.client_nums_map.keys()),1))
 
+            for client_id,client in self.clients:
+                # if client_id not in res:
+                #     continue
+                total_data_nums += len(client.traid)
 
             for client_id,client in tqdm(self.clients,desc="Client training"):
-                if client_id not in res:
-                    continue
+
+                # if client_id not in res:
+                #     continue
+
                 u_params,loss = client.fit(
                     s_params,self.loss_fn,self.optimizer,lr
                 )
                 collector.append(u_params)
                 loss_list.append(loss)
+                coefficients.append(len(client.traid)/total_data_nums)
+         
 
             self.logger.info(f"[{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}")
+            self.server.upgrade(collector,coefficients)
+            self._check(coefficients)
 
-            self.server.upgrade(collector)
+            print(self.clients[0].loss_list)
 
-            if (epoch+1) % 20 == 0:
+            if (epoch+1) % 10 == 0:
                 y_list,y_pred_list = self.predict(test_traid)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)

@@ -21,7 +21,7 @@ class Client(object):
         self.loss_list = []
         self.n_item = len(traid)
         self.train_loader = DataLoader(
-            ToTorchDataset(self.traid), batch_size=10, drop_last=True)
+            ToTorchDataset(self.traid), batch_size=10)
 
     def fit(self, params, loss_fn, optimizer, lr, epoch=5):
         total_loss = 0
@@ -43,6 +43,7 @@ class Client(object):
             loss_per_epoch = train_batch_loss / len(self.train_loader)
             self.loss_list.append(loss_per_epoch)
             total_loss += loss_per_epoch
+            
         return self.model.state_dict(), round(total_loss/epoch,4)
 
 

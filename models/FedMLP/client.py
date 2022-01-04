@@ -6,7 +6,7 @@ import numpy as np
 from data import ToTorchDataset
 from torch.utils.data import DataLoader
 from utils.model_util import split_d_traid, nonzero_mean, traid_to_matrix, use_optimizer
-
+import copy
 
 class Client(object):
     """客户端实体
@@ -26,6 +26,7 @@ class Client(object):
     def fit(self, params, loss_fn, optimizer, lr, epoch=5):
         total_loss = 0
         self.model.load_state_dict(params)
+        self.model.train()
         opt = optimizer(self.model.parameters(), lr)
         for i in range(epoch):
             train_batch_loss = 0
@@ -70,7 +71,7 @@ class Clients(object):
                 traid_row[1]), float(traid_row[2])
             r[uid].append(traid_row)
         for uid, rows in tqdm(r.items(), desc="Building clients..."):
-            self.clients_map[uid] = Client(rows, uid, self.model, self.device)
+            self.clients_map[uid] = Client(rows, uid, copy.deepcopy(self.model), self.device)
             self.client_nums_map[uid] = len(rows)
         print(f"Clients Nums:{len(self.clients_map)}")
         print(f"Nums for client:",self.client_nums_map)

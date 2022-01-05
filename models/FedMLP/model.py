@@ -141,6 +141,7 @@ class FedMLPModel(FedModelBase):
         self._model.load_state_dict(s_params)
         y_pred_list = []
         y_list = []
+        self._model.to(self.device)
         self._model.eval()
         with torch.no_grad():
             for batch_id, batch in tqdm(enumerate(test_loader),

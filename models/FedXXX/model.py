@@ -189,7 +189,7 @@ class FedXXXLaunch(FedModelBase):
         y_list = []
         traid, p_traid = split_d_traid(d_traid)
         p_traid_dataloader = DataLoader(ToTorchDataset(p_traid),
-                                        batch_size=256)  # 这里可以优化 这样写不是很好
+                                        batch_size=2048)  # 这里可以优化 这样写不是很好
 
         def upcc():
 

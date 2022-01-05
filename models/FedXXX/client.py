@@ -20,13 +20,13 @@ class Client(ClientBase):
         self.uid = uid
         self.n_item = len(traid)
         self.data_loader = DataLoader(ToTorchDataset(self.traid),
-                                      batch_size=128,
+                                      batch_size=self.n_item,
                                       drop_last=True)
         self.single_batch = DataLoader(ToTorchDataset(self.traid),
                                        batch_size=1,
                                        drop_last=True)
 
-    def fit(self, params, loss_fn, optimizer: str, lr, epochs=5):
+    def fit(self, params, loss_fn, optimizer: str, lr, epochs=10):
         return super().fit(params, loss_fn, optimizer, lr, epochs=epochs)
 
     def upload_feature(self, params):

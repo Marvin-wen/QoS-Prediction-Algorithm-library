@@ -141,6 +141,7 @@ class FedXXXLaunch(FedModelBase):
                 f"[{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}"
             )
 
+            print(self.clients[0].loss_list)
             if not best_train_loss:
                 best_train_loss = sum(loss_list) / len(loss_list)
                 is_best = True
@@ -170,8 +171,8 @@ class FedXXXLaunch(FedModelBase):
     # 这里的代码写的很随意 没时间优化了
     def predict(self,
                 d_traid,
-                similarity_th=0.6,
-                w=0.5,
+                similarity_th=0.9,
+                w=0.8,
                 use_similarity=True,
                 resume=False,
                 path=None):

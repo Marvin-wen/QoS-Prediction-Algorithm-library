@@ -20,7 +20,7 @@ from .model import FedXXXModel
 RESULT MODEL:
 """
 
-IS_FED = False
+IS_FED = True
 
 epochs = 1000
 desnity = 0.05
@@ -119,15 +119,15 @@ else:
                          loss_fn, 1, nn.GELU)
 
     print(f"模型参数:", count_parameters(model))
-    model.fit(epochs, lr=0.01, test_d_traid=test_data)
+    model.fit(epochs, lr=0.0005, test_d_traid=test_data)
     # y, y_pred = model.predict(
     #     test_data,
     #     similarity_th=0.8,
-    #     w=0.5,
+    #     w=0.8,
     #     use_similarity=True,
     #     resume=True,
     #     path=
-    #     "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/FedXXXLaunch/loss_0.4664.ckpt"
+    #     "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/FedXXXModel/loss_0.3726.ckpt"
     # )
     # mae_ = mae(y, y_pred)
     # mse_ = mse(y, y_pred)

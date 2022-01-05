@@ -3,6 +3,7 @@ from collections import UserDict
 
 import numpy as np
 import torch
+from models.base import FedModelBase
 from numpy.lib.function_base import select
 from pandas.io.parsers import read_table
 from torch import nn
@@ -61,7 +62,7 @@ class FedMLP(nn.Module):
         return x
 
 
-class FedMLPModel():
+class FedMLPModel(FedModelBase):
     def __init__(self,
                  traid,
                  loss_fn,
@@ -89,26 +90,15 @@ class FedMLPModel():
         assert abs(sum(iterator) - 1) <= 1e-4
 
     def update_selected_clients(self, sampled_client_indices, lr, s_params):
-        """使用 client.fit 函数来训练被选择的client
-        """
-        collector = []
-        client_loss = []
-        selected_total_size = 0  # client数据集总数
-
-        for uid in tqdm(sampled_client_indices, desc="Client training"):
-            s_params, loss = self.clients[uid].fit(s_params, self.loss_fn,
-                                                   self.optimizer, lr)
-            collector.append(s_params)
-            client_loss.append(loss)
-            selected_total_size += self.clients[uid].n_item
-        return collector, client_loss, selected_total_size
+        return super().update_selected_clients(sampled_client_indices, lr,
+                                               s_params)
 
     def evaluate_selected_clients(self, sampled_client_indices):
         for uid in sampled_client_indices:
             self.clients[uid].evaluate()
 
     # todo how to add loss?
-    def fit(self, epochs, lr, test_traid, fraction=0.1):
+    def fit(self, epochs, lr, test_traid, fraction=1):
         for epoch in tqdm(range(epochs), desc="Training Epochs"):
 
             # 0. Get params from server
@@ -137,7 +127,7 @@ class FedMLPModel():
 
             print(list(self.clients[0].loss_list))
 
-            if (epoch + 1) % 50 == 0:
+            if (epoch + 1) % 10 == 0:
                 y_list, y_pred_list = self.predict(test_traid)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)

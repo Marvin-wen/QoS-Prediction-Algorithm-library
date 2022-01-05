@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from typing import Dict, List
 
+from tqdm import tqdm
+
 from utils.model_util import use_optimizer
 
 from .utils import train_mult_epochs_with_dataloader
@@ -61,4 +63,20 @@ class ServerBase(object):
 
 
 class FedModelBase(object):
-    ...
+    def update_selected_clients(self, sampled_client_indices, lr, s_params):
+        """使用 client.fit 函数来训练被选择的client
+        """
+        collector = []
+        client_loss = []
+        selected_total_size = 0  # client数据集总数
+
+        for uid in tqdm(sampled_client_indices, desc="Client training"):
+            s_params, loss = self.clients[uid].fit(s_params, self.loss_fn,
+                                                   self.optimizer, lr)
+            collector.append(s_params)
+            client_loss.append(loss)
+            selected_total_size += self.clients[uid].n_item
+        return collector, client_loss, selected_total_size
+
+    def _check(self, iterator):
+        assert abs(sum(iterator) - 1) <= 1e-4

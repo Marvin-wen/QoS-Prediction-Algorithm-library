@@ -24,6 +24,7 @@ def save_checkpoint(state,
     file_path = absolute(f"{save_dirname}/{save_filename}")
     if is_best:
         print("=> Saving a new best")
+        print(file_path)
         torch.save(state, file_path)  # save checkpoint
     else:
         print("=> Validation Accuracy did not improve")
@@ -93,9 +94,7 @@ def use_optimizer(network, opt):
                                     lr=0.01,
                                     momentum=0.99)
     elif opt == 'adam':
-        optimizer = torch.optim.Adam(network.parameters(),
-                                     lr=0.01,
-                                     weight_decay=0.0005)
+        optimizer = torch.optim.Adam(network.parameters(), lr=0.01)
     return optimizer
 
 

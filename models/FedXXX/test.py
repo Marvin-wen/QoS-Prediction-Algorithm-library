@@ -5,16 +5,15 @@ import numpy as np
 import torch
 from data import InfoDataset, MatrixDataset, ToTorchDataset
 from models.FedXXX.model import Embedding, FedXXXLaunch, FedXXXModel
-from models.FedXXX.utils import ResNetBasicBlock
+from models.FedXXX.resnet_utils import ResNetBasicBlock
 from torch import nn, optim
 from torch.nn.modules import loss
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
 from utils.decorator import timeit
 from utils.evaluation import mae, mse, rmse
-from utils.model_util import freeze_random
+from utils.model_util import count_parameters, freeze_random
 
 from .model import FedXXXModel
 """
@@ -35,16 +34,7 @@ def data_preprocess(traid,
                     u_info_obj: InfoDataset,
                     i_info_obj: InfoDataset,
                     is_dtraid=False):
-    """生成d_traid
-
-    Args:
-        traid ([type]): [description]
-        u_info_obj (InfoDataset): [description]
-        i_info_obj (InfoDataset): [description]
-        need_uid (bool, optional): [description]. Defaults to False.
-
-    Returns:
-        [type]: [description]
+    """生成d_traid [[traid],[p_traid]]
     """
     r = []
     for row in tqdm(traid, desc="Gen d_traid"):
@@ -63,15 +53,16 @@ u_info = InfoDataset("user", u_enable_columns)
 i_info = InfoDataset("service", i_enable_columns)
 train, test = md.split_train_test(desnity)
 
-loss_fn = nn.SmoothL1Loss()
+# loss_fn = nn.SmoothL1Loss()
+loss_fn = nn.L1Loss()
 
 user_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [16, 16],
-    "in_size": 32,  # embedding后接一个全连阶层在进入resnet
-    "blocks_sizes": [8, 32, 16],  # 最后的输出是8
-    "deepths": [1, 1],
+    "embedding_dims": [12, 12],
+    "in_size": 36,  # embedding后接一个全连阶层在进入resnet
+    "blocks_sizes": [16, 8],  # 最后的输出是8
+    "deepths": [1],
     "activation": nn.ReLU,
     "block": ResNetBasicBlock
 }
@@ -79,10 +70,10 @@ user_params = {
 item_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": i_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [16, 16],
-    "in_size": 32,
-    "blocks_sizes": [32, 16, 8],  # item最后的输出是8
-    "deepths": [1, 1],
+    "embedding_dims": [12, 12],
+    "in_size": 36,
+    "blocks_sizes": [16, 8],  # item最后的输出是8
+    "deepths": [1],
     "activation": nn.ReLU,
     "block": ResNetBasicBlock
 }
@@ -109,7 +100,7 @@ if not IS_FED:
     train_dataloader = DataLoader(train_dataset, batch_size=128)
     test_dataloader = DataLoader(test_dataset, batch_size=128)
     model = FedXXXModel(user_params, item_params, loss_fn, [16])  # 非联邦
-    opt = Adam(model.parameters(), lr=0.001)
+    opt = Adam(model.parameters(), lr=0.01)
     model.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader)
     y, y_pred = model.predict(
         test_dataloader, True,
@@ -126,6 +117,19 @@ else:
     test_data = fed_data_preprocess(test, u_info, i_info)
     model = FedXXXLaunch(train_data, user_params, item_params, [16], loss_fn,
                          1, nn.GELU)
-    from utils.model_util import count_parameters
-    print(count_parameters(model))
-    model.fit(epochs, lr=0.001, test_d_traid=test_data)
+
+    print(f"模型参数:", count_parameters(model))
+    model.fit(epochs, lr=0.01, test_d_traid=test_data)
+    # y, y_pred = model.predict(
+    #     test_data,
+    #     similarity_th=0.8,
+    #     w=0.5,
+    #     use_similarity=True,
+    #     resume=True,
+    #     path=
+    #     "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/FedXXXLaunch/loss_0.4664.ckpt"
+    # )
+    # mae_ = mae(y, y_pred)
+    # mse_ = mse(y, y_pred)
+    # rmse_ = rmse(y, y_pred)
+    # print(f"Density:{0.05},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")

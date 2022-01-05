@@ -1,11 +1,12 @@
-
-
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import load_checkpoint, save_checkpoint
 from utils.mylogger import TNLog
+
+from .utils import train_single_epoch_with_dataloader,train_mult_epochs_with_dataloader
 
 
 class ModelBase(object):
@@ -39,6 +40,7 @@ class ModelBase(object):
             save_filename :  保存的模型的名字 Defaults to "".
         """
         self.model.train()
+        self.model.to(self.device)
         train_loss_list = []
         eval_loss_list = []
         best_loss = None
@@ -166,4 +168,3 @@ class MemoryBase(object):
 
     def train():
         raise NotImplementedError
-

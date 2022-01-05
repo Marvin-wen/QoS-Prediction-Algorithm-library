@@ -1,3 +1,4 @@
+import copy
 from collections import OrderedDict, defaultdict
 from functools import partialmethod
 
@@ -26,7 +27,7 @@ class Client(ClientBase):
                                        batch_size=1,
                                        drop_last=True)
 
-    def fit(self, params, loss_fn, optimizer: str, lr, epochs=10):
+    def fit(self, params, loss_fn, optimizer: str, lr, epochs=5):
         return super().fit(params, loss_fn, optimizer, lr, epochs=epochs)
 
     def upload_feature(self, params):
@@ -62,7 +63,8 @@ class Clients(object):
                 traid_row[2])
             r[uid].append(p_traid_row)
         for uid, rows in tqdm(r.items(), desc="Building clients..."):
-            self.clients_map[uid] = Client(rows, uid, self.device, self.model)
+            self.clients_map[uid] = Client(rows, uid, self.device,
+                                           copy.deepcopy(self.model))
         print(f"Clients Nums:{len(self.clients_map)}")
 
     def sample_clients(self, fraction):

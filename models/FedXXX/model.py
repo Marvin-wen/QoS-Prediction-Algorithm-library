@@ -133,8 +133,9 @@ class FedXXXLaunch(FedModelBase):
                 for idx in sampled_client_indices
             ]
             self._check(mixing_coefficients)
-            self.server.upgrade_wich_cefficients(collector,
-                                                 mixing_coefficients)
+            # self.server.upgrade_wich_cefficients(collector,
+            #                                      mixing_coefficients)
+            self.server.upgrade_average(collector)
 
             # 3. 服务端根据参数更新模型
             self.logger.info(
@@ -173,7 +174,7 @@ class FedXXXLaunch(FedModelBase):
                 d_traid,
                 similarity_th=0.9,
                 w=0.8,
-                use_similarity=True,
+                use_similarity=False,
                 resume=False,
                 path=None):
         if resume:
@@ -208,6 +209,7 @@ class FedXXXLaunch(FedModelBase):
             else:
                 return 0
 
+        self._model.to(self.device)
         self._model.eval()
         with torch.no_grad():
             # for batch_id, batch in tqdm(enumerate(test_loader)):

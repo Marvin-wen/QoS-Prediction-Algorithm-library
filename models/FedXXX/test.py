@@ -20,7 +20,7 @@ from .model import FedXXXModel
 RESULT MODEL:
 """
 
-IS_FED = True
+IS_FED = False
 
 epochs = 1000
 desnity = 0.05
@@ -59,22 +59,22 @@ loss_fn = nn.L1Loss()
 user_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [12, 12],
-    "in_size": 36,  # embedding后接一个全连阶层在进入resnet
-    "blocks_sizes": [16, 8],  # 最后的输出是8
-    "deepths": [1],
-    "activation": nn.ReLU,
+    "embedding_dims": [16, 16],
+    "in_size": 32,  # embedding后接一个全连阶层在进入resnet
+    "blocks_sizes": [64, 128, 64, 32],  # 最后的输出是8
+    "deepths": [1, 2, 2],
+    "activation": nn.GELU,
     "block": ResNetBasicBlock
 }
 
 item_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": i_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [12, 12],
-    "in_size": 36,
-    "blocks_sizes": [16, 8],  # item最后的输出是8
-    "deepths": [1],
-    "activation": nn.ReLU,
+    "embedding_dims": [16, 16],
+    "in_size": 32,
+    "blocks_sizes": [64, 128, 64, 32],  # item最后的输出是8
+    "deepths": [1, 2, 2],
+    "activation": nn.GELU,
     "block": ResNetBasicBlock
 }
 
@@ -98,9 +98,9 @@ if not IS_FED:
     train_dataset = ToTorchDataset(train_data)
     test_dataset = ToTorchDataset(test_data)
     train_dataloader = DataLoader(train_dataset, batch_size=128)
-    test_dataloader = DataLoader(test_dataset, batch_size=128)
-    model = FedXXXModel(user_params, item_params, loss_fn, [16])  # 非联邦
-    opt = Adam(model.parameters(), lr=0.01)
+    test_dataloader = DataLoader(test_dataset, batch_size=2048)
+    model = FedXXXModel(user_params, item_params, loss_fn, [64, 32, 16])  # 非联邦
+    opt = Adam(model.parameters(), lr=0.0005)
     model.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader)
     y, y_pred = model.predict(
         test_dataloader, True,
@@ -115,8 +115,8 @@ if not IS_FED:
 else:
     train_data = fed_data_preprocess(train, u_info, i_info)
     test_data = fed_data_preprocess(test, u_info, i_info)
-    model = FedXXXLaunch(train_data, user_params, item_params, [16], loss_fn,
-                         1, nn.GELU)
+    model = FedXXXLaunch(train_data, user_params, item_params, [64, 32, 16],
+                         loss_fn, 1, nn.GELU)
 
     print(f"模型参数:", count_parameters(model))
     model.fit(epochs, lr=0.01, test_d_traid=test_data)

@@ -28,7 +28,7 @@ class Client(ClientBase):
                                        batch_size=1,
                                        drop_last=True)
 
-    def fit(self, params, loss_fn, optimizer: str, lr, epochs=20):
+    def fit(self, params, loss_fn, optimizer: str, lr, epochs=5):
         return super().fit(params, loss_fn, optimizer, lr, epochs=epochs)
 
     def upload_feature(self, params):

@@ -19,7 +19,7 @@ class ClientBase(object):
         self.model.load_state_dict(params)
         self.model.train()
         self.model.to(self.device)
-        opt = use_optimizer(self.model, optimizer)
+        opt = use_optimizer(self.model, optimizer, lr)
         loss, lis = train_mult_epochs_with_dataloader(
             epochs,
             model=self.model,

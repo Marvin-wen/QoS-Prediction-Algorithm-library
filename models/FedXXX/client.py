@@ -15,19 +15,20 @@ from utils.model_util import (nonzero_mean, split_d_traid, traid_to_matrix,
 class Client(ClientBase):
     """客户端实体
     """
-    def __init__(self, traid, uid, device, model) -> None:
+    def __init__(self, traid, uid, device, model, batch_size=-1) -> None:
         super().__init__(device, model)
         self.traid = traid
         self.uid = uid
         self.n_item = len(traid)
+        self.batch_size = self.n_item if batch_size == -1 else batch_size
         self.data_loader = DataLoader(ToTorchDataset(self.traid),
-                                      batch_size=self.n_item,
+                                      batch_size=self.batch_size,
                                       drop_last=True)
         self.single_batch = DataLoader(ToTorchDataset(self.traid),
                                        batch_size=1,
                                        drop_last=True)
 
-    def fit(self, params, loss_fn, optimizer: str, lr, epochs=5):
+    def fit(self, params, loss_fn, optimizer: str, lr, epochs=20):
         return super().fit(params, loss_fn, optimizer, lr, epochs=epochs)
 
     def upload_feature(self, params):

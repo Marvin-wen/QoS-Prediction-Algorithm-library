@@ -33,7 +33,7 @@ class Client(ClientBase):
         self.data_loader = DataLoader(ToTorchDataset(self.traid),
                                       batch_size=self.batch_size)
 
-    def fit(self, params, loss_fn, optimizer: str, lr, epochs=5):
+    def fit(self, params, loss_fn, optimizer: str, lr, epochs=2):
         return super().fit(params, loss_fn, optimizer, lr, epochs=epochs)
 
     def __repr__(self) -> str:

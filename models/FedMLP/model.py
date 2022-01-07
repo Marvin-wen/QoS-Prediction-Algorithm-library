@@ -11,6 +11,7 @@ from torch.optim.adam import Adam
 from torch.optim.sgd import SGD
 from tqdm import tqdm
 from utils.evaluation import mae, mse, rmse
+from utils.model_util import load_checkpoint, save_checkpoint
 from utils.mylogger import TNLog
 
 from .client import Clients
@@ -98,7 +99,9 @@ class FedMLPModel(FedModelBase):
             self.clients[uid].evaluate()
 
     # todo how to add loss?
-    def fit(self, epochs, lr, test_traid, fraction=1):
+    def fit(self, epochs, lr, test_traid, fraction=0.1):
+        best_train_loss = None
+        is_best = False
         for epoch in tqdm(range(epochs), desc="Training Epochs"):
 
             # 0. Get params from server
@@ -126,8 +129,24 @@ class FedMLPModel(FedModelBase):
             )
 
             print(list(self.clients[0].loss_list))
+            if not best_train_loss:
+                best_train_loss = sum(loss_list) / len(loss_list)
+                is_best = True
+            elif sum(loss_list) / len(loss_list) < best_train_loss:
+                best_train_loss = sum(loss_list) / len(loss_list)
+                is_best = True
+            else:
+                is_best = False
 
-            if (epoch + 1) % 10 == 0:
+            ckpt = {
+                "model": self.server.params,
+                "epoch": epoch + 1,
+                "best_loss": best_train_loss
+            }
+            save_checkpoint(ckpt, is_best, f"output/{self.name}",
+                            f"loss_{best_train_loss:.4f}.ckpt")
+
+            if (epoch + 1) % 200 == 0:
                 y_list, y_pred_list = self.predict(test_traid)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)
@@ -136,8 +155,18 @@ class FedMLPModel(FedModelBase):
                 self.logger.info(
                     f"Epoch:{epoch+1} mae:{mae_},mse:{mse_},rmse:{rmse_}")
 
-    def predict(self, test_loader):
-        s_params = self.server.params
+    def predict(self, test_loader, resume=False, path=None):
+        if resume:
+            ckpt = load_checkpoint(path)
+            s_params = ckpt["model"]
+            self._model.load_state_dict(s_params)
+            self.logger.debug(
+                f"Check point restored! => loss {ckpt['best_loss']:>3.5f} Epoch {ckpt['epoch']}"
+            )
+        else:
+            s_params = self.server.params
+            self._model.load_state_dict(s_params)
+
         self._model.load_state_dict(s_params)
         y_pred_list = []
         y_list = []

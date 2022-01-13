@@ -1,6 +1,7 @@
 *.ipynb
 *.json
-
+*.vscode
+*.ipynb_checkpoints
 
 # pycharm
 .idea/*

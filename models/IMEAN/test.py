@@ -3,7 +3,6 @@ from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
 
 from .model import IMEANModel
-
 """
 RESULT IMEAN:
 Density:0.05,type:rt,mae:0.7036465465739269,mse:2.4719828954178786,rmse:1.5722540810625611
@@ -17,23 +16,19 @@ Density:0.15,type:tp,mae:26.6891851209872,mse:4156.781147853273,rmse:64.47310406
 Density:0.2,type:tp,mae:26.626194861141634,mse:4106.05625434028,rmse:64.0785163244303
 """
 
-freeze_random() # 冻结随机数 保证结果一致
+freeze_random()  # 冻结随机数 保证结果一致
 
-for density in [0.05,0.1,0.15,0.2]:
+for density in [0.05, 0.1, 0.15, 0.2]:
     type_ = "tp"
     rt_data = MatrixDataset(type_)
-    train_data,test_data = rt_data.split_train_test(density)
-
+    train_data, test_data = rt_data.split_train_test(density)
 
     umean = IMEANModel()
     umean.fit(train_data)
-    y,y_pred = umean.predict(test_data)
+    y, y_pred = umean.predict(test_data)
 
-
-    mae_ = mae(y,y_pred)
-    mse_ = mse(y,y_pred)
-    rmse_ = rmse(y,y_pred)
+    mae_ = mae(y, y_pred)
+    mse_ = mse(y, y_pred)
+    rmse_ = rmse(y, y_pred)
 
     print(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
-
-

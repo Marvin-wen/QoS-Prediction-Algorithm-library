@@ -4,7 +4,6 @@ from utils.model_util import freeze_random
 
 from . import Clients, Server
 from .model import FedMF
-
 """
 RESULT FedMF: 
 100epoch

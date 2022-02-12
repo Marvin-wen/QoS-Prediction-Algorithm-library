@@ -13,6 +13,6 @@ class Server(object):
     def upgrade(self, lr, gradient_from_user: list):
         """Server upgrades by user gradient
         """
-        for gradient in tqdm(gradient_from_user, desc="Server upgrade!"):
+        for gradient in gradient_from_user:
             iid, grad = gradient[0], gradient[1]
             self.items_vec[iid] -= lr * grad

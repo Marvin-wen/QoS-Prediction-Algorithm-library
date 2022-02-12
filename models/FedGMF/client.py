@@ -45,8 +45,6 @@ class Clients(ClientsBase):
         self.client_nums_map = {}
         super().__init__(traid, model, device)
 
-        self._get_clients()
-
     def _get_clients(self):
         r = defaultdict(list)
         for traid_row in self.traid:

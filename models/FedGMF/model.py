@@ -3,7 +3,7 @@ from collections import UserDict
 
 import numpy as np
 import torch
-from models.base import FedModelBase
+from models.base import FedModelBase, ModelBase
 from numpy.lib.function_base import select
 from pandas.io.parsers import read_table
 from torch import nn
@@ -18,22 +18,10 @@ from .client import Clients
 from .server import Server
 
 
-class FedMLP(nn.Module):
-    def __init__(self,
-                 n_user,
-                 n_item,
-                 dim,
-                 layers=[32, 16, 8],
-                 output_dim=1) -> None:
-        """
-        Args:
-            n_user ([type]): 用户数量
-            n_item ([type]): 物品数量
-            dim ([type]): 特征空间的维度
-            layers (list, optional): 多层感知机的层数. Defaults to [16,32,16,8].
-            output_dim (int, optional): 最后输出的维度. Defaults to 1.
-        """
-        super(FedMLP, self).__init__()
+class FedGMF(nn.Module):
+    def __init__(self, n_user, n_item, dim=8, output_dim=1) -> None:
+        super(FedGMF, self).__init__()
+
         self.num_users = n_user
         self.num_items = n_item
         self.latent_dim = dim
@@ -43,41 +31,30 @@ class FedMLP(nn.Module):
         self.embedding_item = nn.Embedding(num_embeddings=self.num_items,
                                            embedding_dim=self.latent_dim)
 
-        self.fc_layers = nn.ModuleList()
-        # MLP的第一层为latent vec的cat
-        self.fc_layers.append(nn.Linear(self.latent_dim * 2, layers[0]))
-
-        for in_size, out_size in zip(layers, layers[1:]):
-            self.fc_layers.append(nn.Linear(in_size, out_size))
-
-        self.fc_output = nn.Linear(layers[-1], output_dim)
+        self.fc_output = nn.Linear(self.latent_dim, output_dim)
 
     def forward(self, user_idx, item_idx):
         user_embedding = self.embedding_user(user_idx)
         item_embedding = self.embedding_item(item_idx)
-        x = torch.cat([user_embedding, item_embedding], dim=-1)
-        for fc_layer in self.fc_layers:
-            x = fc_layer(x)
-            x = nn.ReLU()(x)
-        x = self.fc_output(x)
+        element_product = torch.mul(user_embedding, item_embedding)
+        x = self.fc_output(element_product)
         return x
 
 
-class FedMLPModel(FedModelBase):
+class FedGMFModel(FedModelBase):
     def __init__(self,
                  traid,
                  loss_fn,
                  n_user,
                  n_item,
                  dim,
-                 layers=[32, 16, 8],
                  output_dim=1,
                  use_gpu=True,
                  optimizer="adam") -> None:
         self.device = ("cuda" if
                        (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = __class__.__name__
-        self._model = FedMLP(n_user, n_item, dim, layers, output_dim)
+        self._model = FedGMF(n_user, n_item, dim, output_dim)
 
         self.server = Server()
         self.clients = Clients(traid, self._model, self.device)
@@ -87,12 +64,6 @@ class FedMLPModel(FedModelBase):
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
 
-    def _check(self, iterator):
-        assert abs(sum(iterator) - 1) <= 1e-4
-
-    def update_selected_clients(self, sampled_client_indices, lr, s_params):
-        return super().update_selected_clients(sampled_client_indices, lr,
-                                               s_params)
 
     def evaluate_selected_clients(self, sampled_client_indices):
         for uid in sampled_client_indices:

@@ -35,12 +35,16 @@ class MFModel(object):
 
             for row in traid:
                 user_idx, item_idx, y = int(row[0]), int(row[1]), float(row[2])
+                # 计算预测值
                 y_pred = self.user_vec[user_idx] @ self.item_vec[item_idx].T
                 e_ui = y - y_pred
+                # 计算用户梯度
                 user_grad = -2 * e_ui * self.item_vec[
                     item_idx] + 2 * self.lambda_ * self.user_vec[user_idx]
+                # 计算物品梯度
                 item_grad = -2 * e_ui * self.user_vec[
                     user_idx] + 2 * self.lambda_ * self.item_vec[item_idx]
+                # 梯度更新
                 self.user_vec[user_idx] -= self.lr * user_grad
                 self.item_vec[item_idx] -= self.lr * item_grad
 

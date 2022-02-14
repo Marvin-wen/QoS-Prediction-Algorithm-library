@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from const import *
 from utils.decorator import cache4method
+from utils.preprocess import l2_norm, min_max_scaler, z_score
 
 
 class ToTorchDataset(Dataset):
@@ -75,7 +76,7 @@ class InfoDataset(DatasetBase):
         self.feature2idx = {}  # 为某一个特征所有可能的值编号
         self.feature2num = {}  #
         for column in tqdm(self.enabled_columns, desc="Preparing..."):
-            vc = self.info_data[column].value_counts()
+            vc = self.info_data[column].value_counts(dropna=False)
             self.feature2idx[column] = {
                 k: idx
                 for idx, (k, v) in enumerate(vc.to_dict().items())
@@ -99,11 +100,11 @@ class InfoDataset(DatasetBase):
 
 
 class MatrixDataset(DatasetBase):
-    def __init__(self, type_, is_normalize=False) -> None:
+    def __init__(self, type_) -> None:
         super().__init__(type_)
         assert type_ in ["rt", "tp"], f"类型不符，请在{['rt','tp']}中选择"
-        self.is_normalize = is_normalize
         self.matrix = self._get_row_data()
+        self.scaler = None
 
     def get_similarity_matrix(self, method="cos"):
         assert len(self.matrix) != 0, "matrix should not be empty"
@@ -119,14 +120,7 @@ class MatrixDataset(DatasetBase):
         if isinstance(data, pd.DataFrame):
             data = data.to_numpy()
         self.row_n, self.col_n = data.shape
-        if self.is_normalize:
-            data = self._normalize(data)
         return data
-
-    def _normalize(self, rating_martix):
-        assert isinstance(rating_martix, np.ndarray)
-        _rm = deepcopy(rating_martix)
-        return _rm * 1.0 / rating_martix.max()
 
     def get_triad(self, nan_symbol=-1):
         """生成三元组(uid,iid,rate)
@@ -148,7 +142,11 @@ class MatrixDataset(DatasetBase):
         print("traid_data size:", triad_data.shape)
         return triad_data
 
-    def split_train_test(self, density, nan_symbol=-1, shuffle=True):
+    def split_train_test(self,
+                         density,
+                         nan_symbol=-1,
+                         shuffle=True,
+                         normalize_type=None):
         traid_data = self.get_triad(nan_symbol)
 
         if shuffle:
@@ -156,8 +154,28 @@ class MatrixDataset(DatasetBase):
 
         train_n = int(self.row_n * self.col_n * density)  # 训练集数量
         train_data, test_data = traid_data[:train_n], traid_data[train_n:]
+        if normalize_type is not None:
+            self.__norm_train_test_data(train_data, test_data, normalize_type)
 
         return train_data, test_data
+
+    def __norm_train_test_data(self,
+                               train_data,
+                               test_data,
+                               scaler_type="z_score"):
+        if scaler_type == "z_score":
+            f = z_score
+        elif scaler_type == "l2_norm":
+            f = l2_norm
+        elif scaler_type == "min_max":
+            f = min_max_scaler
+        else:
+            raise NotImplementedError
+        x_train, scaler = f(train_data)
+        x_test, scaler = f(test_data, scaler)
+        self.scaler = scaler
+        train_data[:, 2] = x_train[:, 2]
+        test_data[:, 2] = x_test[:, 2]
 
     def get_mini_triad(self, nan_symbol=-1, sample_nums=200):
         total_triad_data = self.get_triad(nan_symbol)

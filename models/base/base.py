@@ -108,7 +108,7 @@ class ModelBase(object):
                         else:
                             ckpt = {}
                         save_checkpoint(ckpt, is_best, f"output/{self.name}",
-                                        f"loss_{best_loss:.4f}.ckpt")
+                                        f"loss_{save_filename}_{best_loss:.4f}.ckpt")
 
                 elif save_model:
                     ckpt = {
@@ -141,6 +141,7 @@ class ModelBase(object):
                 f"last checkpoint restored! ckpt: loss {ckpt['best_loss']:.4f} Epoch {ckpt['epoch']}"
             )
 
+        self.model.to(self.device)
         self.model.eval()
         with torch.no_grad():
             for batch_id, batch in tqdm(enumerate(test_loader)):

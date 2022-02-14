@@ -112,7 +112,7 @@ class FedXXXLaunch(FedModelBase):
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
 
-    def fit(self, epochs, lr, test_d_traid, fraction=1):
+    def fit(self, epochs, lr, test_d_traid, fraction=1,save_filename=""):
         best_train_loss = None
         is_best = False
         for epoch in tqdm(range(epochs), desc="Traing Epochs "):
@@ -158,7 +158,7 @@ class FedXXXLaunch(FedModelBase):
                 "best_loss": best_train_loss
             }
             save_checkpoint(ckpt, is_best, f"output/{self.name}",
-                            f"loss_{best_train_loss:.4f}.ckpt")
+                            f"loss_{save_filename}_{best_train_loss:.4f}.ckpt")
 
             if (epoch + 1) % 10 == 0:
                 y_list, y_pred_list = self.predict(test_d_traid)

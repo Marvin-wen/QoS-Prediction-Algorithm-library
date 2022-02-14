@@ -99,7 +99,7 @@ class FedMLPModel(FedModelBase):
             self.clients[uid].evaluate()
 
     # todo how to add loss?
-    def fit(self, epochs, lr, test_traid, fraction=0.1):
+    def fit(self, epochs, lr, test_traid, fraction=1):
         best_train_loss = None
         is_best = False
         for epoch in tqdm(range(epochs), desc="Training Epochs"):
@@ -146,7 +146,7 @@ class FedMLPModel(FedModelBase):
             save_checkpoint(ckpt, is_best, f"output/{self.name}",
                             f"loss_{best_train_loss:.4f}.ckpt")
 
-            if (epoch + 1) % 200 == 0:
+            if (epoch + 1) % 20 == 0:
                 y_list, y_pred_list = self.predict(test_traid)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)

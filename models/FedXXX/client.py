@@ -15,11 +15,18 @@ from utils.model_util import (nonzero_mean, split_d_traid, traid_to_matrix,
 class Client(ClientBase):
     """客户端实体
     """
-    def __init__(self, traid, uid, device, model, batch_size=-1) -> None:
+    def __init__(self,
+                 traid,
+                 uid,
+                 device,
+                 model,
+                 batch_size=-1,
+                 local_epochs=5) -> None:
         super().__init__(device, model)
         self.traid = traid
         self.uid = uid
         self.n_item = len(traid)
+        self.local_epochs = local_epochs
         self.batch_size = self.n_item if batch_size == -1 else batch_size
         self.data_loader = DataLoader(ToTorchDataset(self.traid),
                                       batch_size=self.batch_size,
@@ -45,7 +52,12 @@ class Client(ClientBase):
 class Clients(object):
     """多client 的虚拟管理节点
     """
-    def __init__(self, d_traid, model, device) -> None:
+    def __init__(self,
+                 d_traid,
+                 model,
+                 device,
+                 batch_size=-1,
+                 local_epochs=5) -> None:
         super().__init__()
         self.traid, self.p_traid = split_d_traid(d_traid)
         self.model = model
@@ -54,6 +66,8 @@ class Clients(object):
         self.clients_feature_map = OrderedDict()  # 存储每个client的feature
         self.traid2matrix = traid_to_matrix(self.traid, -1)
         self.u_mean = nonzero_mean(self.traid2matrix, -1)
+        self.batch_size = batch_size
+        self.local_epochs = local_epochs
 
         self._get_clients()
 
@@ -64,8 +78,12 @@ class Clients(object):
                 traid_row[2])
             r[uid].append(p_traid_row)
         for uid, rows in tqdm(r.items(), desc="Building clients..."):
-            self.clients_map[uid] = Client(rows, uid, self.device,
-                                           copy.deepcopy(self.model))
+            self.clients_map[uid] = Client(rows,
+                                           uid,
+                                           self.device,
+                                           copy.deepcopy(self.model),
+                                           batch_size=self.batch_size,
+                                           local_epochs=self.local_epochs)
         print(f"Clients Nums:{len(self.clients_map)}")
 
     def sample_clients(self, fraction):

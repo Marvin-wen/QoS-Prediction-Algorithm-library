@@ -22,6 +22,8 @@ Density:0.05,type:rt,mae:0.39733654260635376,mse:1.825060248374939,rmse:1.350947
 Density:0.1,type:rt,mae:0.40407416224479675,mse:1.8361570835113525,rmse:1.3550487756729126 44w
 Density:0.15,type:rt,mae:0.3500382900238037,mse:1.5597128868103027,rmse:1.248884677886963 44
 Density:0.2,type:rt,mae:0.34187352657318115,mse:1.5415867567062378,rmse:1.2416064739227295 43w
+
+Density:0.05,type:tp,mae:17.988832473754883,mse:3172.656982421875,rmse:56.32634353637695
 """
 
 # 0.1 0.15 tp0.05
@@ -29,8 +31,8 @@ Density:0.2,type:rt,mae:0.34187352657318115,mse:1.5415867567062378,rmse:1.241606
 IS_FED = True
 
 epochs = 3000
-desnity = 0.1
-type_ = "rt"
+desnity = 0.05
+type_ = "tp"
 
 u_enable_columns = ["[User ID]", "[Country]", "[AS]"]
 i_enable_columns = ["[Service ID]", "[Country]", "[AS]"]
@@ -130,7 +132,7 @@ if not IS_FED:
     model = FedXXXModel(user_params, item_params, loss_fn, [24, 8])  # 非联邦
     opt = Adam(model.parameters(), lr=0.0005)
     print(f"模型参数:", count_parameters(model))
-    model.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader)
+    # model.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader)
     y, y_pred = model.predict(
         test_dataloader, True,
         "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/FedXXXLaunch/44w_20%_best_loss_0.2620.ckpt"
@@ -161,7 +163,7 @@ else:
         use_similarity=False,
         resume=True,
         path=
-        "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/FedXXXLaunch/442_10%_loss_0.2675.ckpt"
+        "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/FedXXXLaunch/tp_0.05_44w_loss_12.9692.ckpt"
     )
     mae_ = mae(y, y_pred)
     mse_ = mse(y, y_pred)

@@ -5,9 +5,7 @@ import shutil
 
 import numpy as np
 import torch
-import torch.nn.init as init
 from root import absolute
-from scipy.sparse.construct import rand
 from torch import nn
 """
     Some handy functions for model training ...
@@ -90,9 +88,7 @@ def nonzero_mean(matrix, nan_symbol):
 
 def use_optimizer(network, opt, lr):
     if opt == 'sgd':
-        optimizer = torch.optim.SGD(network.parameters(),
-                                    lr=lr,
-                                    momentum=0.99)
+        optimizer = torch.optim.SGD(network.parameters(), lr=lr, momentum=0.99)
     elif opt == 'adam':
         optimizer = torch.optim.Adam(network.parameters(), lr=lr)
     return optimizer

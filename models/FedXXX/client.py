@@ -110,6 +110,7 @@ class Clients(object):
                 l.append(val.cpu().numpy())
                 cnt += 1
         l = np.array(l)
+        l = np.corrcoef(l)
         return l
 
     def _query(self, uid, iid, type_="rate"):

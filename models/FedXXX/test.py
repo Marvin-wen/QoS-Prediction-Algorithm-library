@@ -24,9 +24,21 @@ Density:0.15,type:rt,mae:0.3500382900238037,mse:1.5597128868103027,rmse:1.248884
 Density:0.2,type:rt,mae:0.34187352657318115,mse:1.5415867567062378,rmse:1.2416064739227295 43w
 
 Density:0.05,type:tp,mae:17.988832473754883,mse:3172.656982421875,rmse:56.32634353637695
+
+Density:0.1,type:tp,mae:15.86837100982666,mse:2433.6494140625,rmse:49.33203125
+Density:0.15,type:tp,mae:14.093144416809082,mse:2032.4862060546875,rmse:45.08310317993164
+Density:0.2,type:tp,mae:12.833450317382812,mse:1689.3419189453125,rmse:41.10160446166992
+
+
+NON-FED
+Density:0.05,type:rt,mae:0.3647790253162384,mse:1.7513489723205566,rmse:1.32338547706604
+Density:0.1,type:rt,mae:0.3197784423828125,mse:1.4576799869537354,rmse:1.2073441743850708
+Density:0.15,type:rt,mae:0.30833232402801514,mse:1.4249907732009888,rmse:1.1937297582626343
+Density:0.2,type:rt,mae:0.28451427817344666,mse:1.2856311798095703,rmse:1.1338567733764648
 """
 
-# 0.1 0.15 tp0.05
+# non-fed 0.05 0.1 0.15 2
+# fed 0.1 0.15 2
 
 IS_FED = True
 
@@ -70,7 +82,7 @@ user_params = {
     "embedding_dims": [16, 16, 16],
     "in_size": 48,  # embedding后接一个全连阶层在进入resnet
     "blocks_sizes": [64, 128, 64, 32],  # 最后的输出是8
-    "deepths": [2,2,2],
+    "deepths": [2, 2, 2],
     "activation": nn.GELU,
     "block": ResNetBasicBlock
 }
@@ -81,7 +93,7 @@ item_params = {
     "embedding_dims": [16, 16, 16],
     "in_size": 48,
     "blocks_sizes": [64, 128, 64, 32],  # item最后的输出是8
-    "deepths": [2,2,2],
+    "deepths": [2, 2, 2],
     "activation": nn.GELU,
     "block": ResNetBasicBlock
 }
@@ -129,19 +141,24 @@ if not IS_FED:
     test_dataset = ToTorchDataset(test_data)
     train_dataloader = DataLoader(train_dataset, batch_size=128)
     test_dataloader = DataLoader(test_dataset, batch_size=2048)
-    model = FedXXXModel(user_params, item_params, loss_fn, [24, 8])  # 非联邦
+    model = FedXXXModel(user_params, item_params, loss_fn,
+                        [64, 512, 128, 24])  # 非联邦
     opt = Adam(model.parameters(), lr=0.0005)
     print(f"模型参数:", count_parameters(model))
-    # model.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader)
-    y, y_pred = model.predict(
-        test_dataloader, True,
-        "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/FedXXXLaunch/44w_20%_best_loss_0.2620.ckpt"
-    )
-    mae_ = mae(y, y_pred)
-    mse_ = mse(y, y_pred)
-    rmse_ = rmse(y, y_pred)
+    model.fit(train_dataloader,
+              epochs,
+              opt,
+              eval_loader=test_dataloader,
+              save_filename=f"{desnity}_{type_}")
+    # y, y_pred = model.predict(
+    #     test_dataloader, True,
+    #     "D:\yuwenzhuo\QoS-Predcition-Algorithm-library\output\FedXXXLaunch\loss_0.15_tp_10.3945.ckpt"
+    # )
+    # mae_ = mae(y, y_pred)
+    # mse_ = mse(y, y_pred)
+    # rmse_ = rmse(y, y_pred)
 
-    print(f"Density:{0.05},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
+    # print(f"Density:{desnity},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
 
 else:
     train_data = fed_data_preprocess(train, u_info, i_info)
@@ -155,7 +172,7 @@ else:
                          optimizer="adam")
 
     print(f"模型参数:", count_parameters(model))
-    # model.fit(epochs, lr=0.0005, test_d_traid=test_data, fraction=1)
+    # model.fit(epochs, lr=0.0005, test_d_traid=test_data, fraction=1,save_filename=f"{desnity}_{type_}")
     y, y_pred = model.predict(
         test_data,
         similarity_th=0.95,

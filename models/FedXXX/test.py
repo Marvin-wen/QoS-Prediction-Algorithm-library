@@ -19,7 +19,7 @@ from .model import FedXXXModel
 """
 RESULT MODEL:
 Density:0.05,type:rt,mae:0.39733654260635376,mse:1.825060248374939,rmse:1.3509478569030762 43w
-Density:0.1,type:rt,mae:0.40407416224479675,mse:1.8361570835113525,rmse:1.3550487756729126 44w
+Density:0.1,type:rt,mae:0.37645894289016724,mse:1.7110240459442139,rmse:1.308061122894287
 Density:0.15,type:rt,mae:0.3500382900238037,mse:1.5597128868103027,rmse:1.248884677886963 44
 Density:0.2,type:rt,mae:0.34187352657318115,mse:1.5415867567062378,rmse:1.2416064739227295 43w
 
@@ -42,8 +42,8 @@ Density:0.2,type:rt,mae:0.28451427817344666,mse:1.2856311798095703,rmse:1.133856
 IS_FED = True
 
 epochs = 3000
-desnity = 0.05
-type_ = "tp"
+desnity = 0.1
+type_ = "rt"
 
 u_enable_columns = ["[User ID]", "[Country]", "[AS]"]
 i_enable_columns = ["[Service ID]", "[Country]", "[AS]"]
@@ -179,7 +179,7 @@ else:
         use_similarity=False,
         resume=True,
         path=
-        "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/FedXXXLaunch/tp_0.05_44w_loss_12.9692.ckpt"
+        "D:\yuwenzhuo\QoS-Predcition-Algorithm-library\output\FedXXXLaunch\loss_0.05_rt_0.2404.ckpt"
     )
     mae_ = mae(y, y_pred)
     mse_ = mse(y, y_pred)

@@ -36,9 +36,9 @@ class ClientBase(object):
 class ClientsBase(object):
     """多client 的虚拟管理节点
     """
-    def __init__(self, traid, model, device) -> None:
+    def __init__(self, triad, model, device) -> None:
         super().__init__()
-        self.traid = traid
+        self.triad = triad
         self.model = model
         self.device = device
         self.clients_map = {}  # 存储每个client的数据集

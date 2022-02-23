@@ -18,11 +18,11 @@ Federated Based Model
 
 - 三元组
 
-  - traid
-  - p_traid 
-  - d_traid
+  - triad
+  - p_triad 
+  - d_triad
 
-  ` self.traid, self.p_traid = split_d_traid(d_traid)`
+  ` self.triad, self.p_triad = split_d_triad(d_triad)`
 
 
 代码规范:

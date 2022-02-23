@@ -6,7 +6,7 @@ from numpy.core.defchararray import expandtabs
 from numpy.core.fromnumeric import nonzero
 from scipy.stats import pearsonr
 from tqdm import tqdm
-from utils.model_util import nonzero_mean, traid_to_matrix
+from utils.model_util import nonzero_mean, triad_to_matrix
 
 
 class UPCCModel(object):
@@ -69,19 +69,19 @@ class UPCCModel(object):
             self._get_similarity_matrix(self.matrix)
         return self.similarity_matrix[uid_a][uid_b]
 
-    def fit(self, traid):
-        self.matrix = traid_to_matrix(traid, self._nan_symbol)  # 三元组转矩阵
+    def fit(self, triad):
+        self.matrix = triad_to_matrix(triad, self._nan_symbol)  # 三元组转矩阵
         self.similarity_matrix = self._get_similarity_matrix(
             self.matrix)  # 根据矩阵获取相似矩阵
         self.u_mean = nonzero_mean(self.matrix, self._nan_symbol)  # 算好均值
 
-    def predict(self, traid, topK=-1):
+    def predict(self, triad, topK=-1):
         y_list = []
         y_pred_list = []
         cold_boot_cnt = 0
         assert self.u_mean is not None, "Please fit first e.g. model.fit()"
 
-        for row in tqdm(traid, desc="Predict... "):
+        for row in tqdm(triad, desc="Predict... "):
             uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
             if uid + 1 > len(self.u_mean):
                 cold_boot_cnt += 1  # 冷启动
@@ -107,12 +107,12 @@ class UPCCModel(object):
 
             y_pred_list.append(y_pred)
             y_list.append(rate)
-        print(f"cold boot :{cold_boot_cnt/len(traid)*100:4f}%")
+        print(f"cold boot :{cold_boot_cnt/len(triad)*100:4f}%")
         return y_list, y_pred_list
 
 
 if __name__ == "__main__":
-    traid = np.array([
+    triad = np.array([
         [0, 0, 1],
         [0, 1, 3],
         [1, 0, 1],
@@ -128,5 +128,5 @@ if __name__ == "__main__":
     # y_pred 3.5
 
     upcc = UPCCModel()
-    upcc.fit(traid)
+    upcc.fit(triad)
     upcc.train(test)

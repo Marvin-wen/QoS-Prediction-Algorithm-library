@@ -49,23 +49,23 @@ u_enable_columns = ["[User ID]", "[Country]", "[AS]"]
 i_enable_columns = ["[Service ID]", "[Country]", "[AS]"]
 
 
-def data_preprocess(traid,
+def data_preprocess(triad,
                     u_info_obj: InfoDataset,
                     i_info_obj: InfoDataset,
-                    is_dtraid=False):
-    """生成d_traid [[traid],[p_traid]]
+                    is_dtriad=False):
+    """生成d_triad [[triad],[p_triad]]
     """
     r = []
-    for row in tqdm(traid, desc="Gen d_traid"):
+    for row in tqdm(triad, desc="Gen d_triad"):
         uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
         u = u_info_obj.query(uid)
         i = i_info_obj.query(iid)
-        r.append([[uid, iid, rate], [u, i, rate]]) if is_dtraid else r.append(
+        r.append([[uid, iid, rate], [u, i, rate]]) if is_dtriad else r.append(
             [u, i, rate])
     return r
 
 
-fed_data_preprocess = partial(data_preprocess, is_dtraid=True)
+fed_data_preprocess = partial(data_preprocess, is_dtriad=True)
 
 md = MatrixDataset(type_)
 u_info = InfoDataset("user", u_enable_columns)
@@ -171,7 +171,7 @@ else:
                          optimizer="adam")
 
     print(f"模型参数:", count_parameters(model))
-    # model.fit(epochs, lr=0.0005, test_d_traid=test_data, fraction=1,save_filename=f"{desnity}_{type_}")
+    # model.fit(epochs, lr=0.0005, test_d_triad=test_data, fraction=1,save_filename=f"{desnity}_{type_}")
     y, y_pred = model.predict(
         test_data,
         similarity_th=0.95,

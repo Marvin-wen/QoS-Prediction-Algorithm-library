@@ -24,7 +24,7 @@ class MFModel(object):
         self.item_vec = 2 * np.random.random(
             (self.n_item, self.latent_dim)) - 1
 
-    def fit(self, traid, test, epochs=100, verbose=True, early_stop=True):
+    def fit(self, triad, test, epochs=100, verbose=True, early_stop=True):
         if not self.user_vec and not self.item_vec:
             self._init_vec()
 
@@ -33,7 +33,7 @@ class MFModel(object):
             tmp_user_vec = copy.deepcopy(self.user_vec)
             tmp_item_vec = copy.deepcopy(self.item_vec)
 
-            for row in traid:
+            for row in triad:
                 user_idx, item_idx, y = int(row[0]), int(row[1]), float(row[2])
                 # 计算预测值
                 y_pred = self.user_vec[user_idx] @ self.item_vec[item_idx].T
@@ -57,12 +57,12 @@ class MFModel(object):
                 y_list, y_pred_list = self.predict(test)
                 print(f"[{epoch}/{epochs}] MAE:{mae(y_list,y_pred_list):.5f}")
 
-    def predict(self, traid):
+    def predict(self, triad):
         assert isinstance(self.user_vec,
                           np.ndarray), "please fit first e.g. model.fit()"
         y_pred_list = []
         y_list = []
-        for row in tqdm(traid):
+        for row in tqdm(triad):
             uid, iid, y = int(row[0]), int(row[1]), float(row[2])
             y_pred = self.user_vec[uid] @ self.item_vec[iid].T
             y_pred_list.append(y_pred)

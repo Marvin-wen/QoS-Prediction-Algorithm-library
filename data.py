@@ -18,6 +18,7 @@ from utils.decorator import cache4method
 class ToTorchDataset(Dataset):
     """将一个三元组转成Torch Dataset的形式
     """
+
     def __init__(self, traid) -> None:
         super().__init__()
         self.traid = traid
@@ -34,12 +35,19 @@ class ToTorchDataset(Dataset):
 
 
 class DatasetBase(object):
+    """
+    指定要使用的数据集
+    rt: rtMatrix
+    tp: tpMatrix
+    user: userlist
+    service: wslist
+    """
+
     def __init__(self, type_) -> None:
         super().__init__()
 
         self.type = type_
-        assert self.type in ["rt", "tp", "user", "service"
-                             ], f"类型不符，请在{['rt','tp','user','service']}中选择"
+        assert self.type in ["rt", "tp", "user", "service"], f"类型不符，请在{['rt', 'tp', 'user', 'service']}中选择"
 
     def get_row_data(self):
         if self.type == "rt":
@@ -56,11 +64,12 @@ class DatasetBase(object):
 class InfoDataset(DatasetBase):
     """用户和服务的详细描述数据
     """
+
     def __init__(self, type_, enabled_columns: list) -> None:
         self.type = type_
         super().__init__(type_)
         assert self.type in ["user",
-                             "service"], f"类型不符，请在{['user','service']}中选择"
+                             "service"], f"类型不符，请在{['user', 'service']}中选择"
         self.enabled_columns = enabled_columns
         self.info_data = self.get_row_data()
         self._fit()
@@ -101,7 +110,7 @@ class InfoDataset(DatasetBase):
 class MatrixDataset(DatasetBase):
     def __init__(self, type_, is_normalize=False) -> None:
         super().__init__(type_)
-        assert type_ in ["rt", "tp"], f"类型不符，请在{['rt','tp']}中选择"
+        assert type_ in ["rt", "tp"], f"类型不符，请在{['rt', 'tp']}中选择"
         self.is_normalize = is_normalize
         self.matrix = self._get_row_data()
 

@@ -24,16 +24,16 @@ class UMEANModel(object):
         assert self.u_mean != {}, "Please fit first. e.g. model.fit(traid)"
         y_lis = []
         y_pred_lis = []
-        code_boot_cnt = 0
+        cold_boot_cnt = 0
         print("Predicting...")
         for row in tqdm(traid):
             uid, iid, y = int(row[0]), int(row[1]), float(row[2])
             y_pred = self.u_mean.get(uid, code_boot)
             if y_pred == None:
-                code_boot_cnt += 1
+                cold_boot_cnt += 1
                 continue
             y_lis.append(y)
             y_pred_lis.append(y_pred)
         print(
-            f"Predicting done! code_boot:{code_boot_cnt/len(traid)*100:.4f}%")
+            f"Predicting done! code_boot:{cold_boot_cnt / len(traid) * 100:.4f}%")
         return y_lis, y_pred_lis

@@ -1,6 +1,8 @@
-from collections import OrderedDict
+import copy
+from collections import OrderedDict, defaultdict
 from typing import Dict, List
 
+import numpy as np
 from tqdm import tqdm
 
 from utils.model_util import use_optimizer
@@ -29,6 +31,42 @@ class ClientBase(object):
             loss_fn=loss_fn)
         self.loss_list = [*lis]
         return self.model.state_dict(), round(loss, 4)
+
+
+class ClientsBase(object):
+    """多client 的虚拟管理节点
+    """
+    def __init__(self, traid, model, device) -> None:
+        super().__init__()
+        self.traid = traid
+        self.model = model
+        self.device = device
+        self.clients_map = {}  # 存储每个client的数据集
+
+        self._get_clients()
+
+    def sample_clients(self, fraction):
+        """Select some fraction of all clients."""
+        num_clients = len(self.clients_map)
+        num_sampled_clients = max(int(fraction * num_clients), 1)
+        sampled_client_indices = sorted(
+            np.random.choice(a=[k for k, v in self.clients_map.items()],
+                             size=num_sampled_clients,
+                             replace=False).tolist())
+        return sampled_client_indices
+
+    def _get_clients(self):
+        raise NotImplementedError
+
+    def __len__(self):
+        return len(self.clients_map)
+
+    def __iter__(self):
+        for item in self.clients_map.items():
+            yield item
+
+    def __getitem__(self, uid):
+        return self.clients_map[uid]
 
 
 class ServerBase(object):

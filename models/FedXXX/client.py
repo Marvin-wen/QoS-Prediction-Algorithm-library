@@ -8,7 +8,7 @@ from data import ToTorchDataset
 from models.base import ClientBase
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from utils.model_util import (nonzero_mean, split_d_traid, traid_to_matrix,
+from utils.model_util import (nonzero_user_mean, split_d_traid, traid_to_matrix,
                               use_optimizer)
 
 
@@ -65,7 +65,7 @@ class Clients(object):
         self.clients_map = {}  # 存储每个client的数据集
         self.clients_feature_map = OrderedDict()  # 存储每个client的feature
         self.traid2matrix = traid_to_matrix(self.traid, -1)
-        self.u_mean = nonzero_mean(self.traid2matrix, -1)
+        self.u_mean = nonzero_user_mean(self.traid2matrix, -1)
         self.batch_size = batch_size
         self.local_epochs = local_epochs
 

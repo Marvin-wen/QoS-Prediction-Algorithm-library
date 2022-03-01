@@ -1,12 +1,15 @@
 import copy
 import numpy as np
+import math
 from models import UMEAN
 from numpy.core.defchararray import expandtabs
 from numpy.core.fromnumeric import nonzero
-from utils.similarity import *
 from tqdm import tqdm
-from utils.model_util import nonzero_mean, traid_to_matrix
+from utils.model_util import nonzero_user_mean, traid_to_matrix
 
+# 相似度计算库
+from scipy.stats import pearsonr
+from sklearn.metrics.pairwise import cosine_similarity
 
 class UPCCModel(object):
     def __init__(self) -> None:
@@ -17,7 +20,7 @@ class UPCCModel(object):
         self._nan_symbol = -1  # 缺失项标记（数据集中使用-1表示缺失项）
 
     def _get_similarity_matrix(self, matrix, metric):
-        """获取相似矩阵
+        """获取项目相似度矩阵
 
         Args:
             matrix (): QoS矩阵
@@ -43,11 +46,15 @@ class UPCCModel(object):
                     # 依据指定的相似度计算方法计算用户i,j的相似度
                     try:
                         if metric == 'PCC':
-                            sim = pearsonr_similarity(row_i[intersect], row_j[intersect])
+                            # 如果一个项目的评分向量中所有值都相等，则无法计算皮尔逊相关系数
+                            if len(set(row_i[intersect])) == 1 or len(set(row_j[intersect])) == 1:
+                                sim = 0
+                            else:
+                                sim = pearsonr(row_i[intersect], row_j[intersect])[0]
                         elif metric == 'COS':
                             sim = cosine_similarity(row_i[intersect], row_j[intersect])
                         elif metric == 'ACOS':
-                            sim = adjusted_cosine_similarity(row_i, row_j)
+                            sim = adjusted_cosine_similarity(row_i, row_j, intersect, i, j, self.u_mean)
                     except Exception as e:
                         sim = 0
                 similarity_matrix[i][j] = similarity_matrix[j][i] = sim
@@ -94,8 +101,8 @@ class UPCCModel(object):
             metric (): 相似度计算方法, 可选参数: PCC(皮尔逊相关系数), COS(余弦相似度), ACOS(修正的余弦相似度)
         """
         self.matrix = traid_to_matrix(traid, self._nan_symbol)  # 数据三元组转QoS矩阵
-        self.similarity_matrix = self._get_similarity_matrix(self.matrix, metric)  # 根据QoS矩阵获取相似矩阵
-        self.u_mean = nonzero_mean(self.matrix, self._nan_symbol)  # 根据QoS矩阵计算每个用户的评分均值
+        self.u_mean = nonzero_user_mean(self.matrix, self._nan_symbol)  # 根据QoS矩阵计算每个用户的评分均值
+        self.similarity_matrix = self._get_similarity_matrix(self.matrix, metric)  # 根据QoS矩阵获取用户相似矩阵
 
     def predict(self, traid, topK=-1):
         y_list = []  # 真实评分
@@ -134,6 +141,31 @@ class UPCCModel(object):
         print(f"cold boot :{cold_boot_cnt / len(traid) * 100:4f}%")
         return y_list, y_pred_list
 
+
+def adjusted_cosine_similarity(x, y, intersect, id_x, id_y, u_mean):
+    """修正的余弦相似度
+
+    Returns:
+
+    """
+    n = len(x)
+    if n != len(y):
+        raise ValueError('x and y must have the same length.')
+    if n < 2:
+        raise ValueError('x and y must have length at least 2.')
+    if len(intersect) < 2:
+        raise ValueError('there must be at least two non-zero entries')
+
+    x = np.asarray(x)
+    y = np.asarray(y)
+    nonzero_x = np.nonzero(x)[0]
+    nonzero_y = np.nonzero(y)[0]
+
+    multiply_sum = sum((x[i] - u_mean[id_x]) * (y[i] - u_mean[id_y]) for i in intersect)
+    pow_sum_x = sum(math.pow(x[i] - u_mean[id_x], 2) for i in nonzero_x)
+    pow_sum_y = sum(math.pow(y[i] - u_mean[id_y], 2) for i in nonzero_y)
+
+    return multiply_sum / math.sqrt(pow_sum_x * pow_sum_y)
 
 if __name__ == "__main__":
     traid = np.array([

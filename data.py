@@ -35,12 +35,18 @@ class ToTorchDataset(Dataset):
 
 
 class DatasetBase(object):
+    """
+    指定要使用的数据集
+    rt: rtMatrix
+    tp: tpMatrix
+    user: userlist
+    service: wslist
+    """
     def __init__(self, type_) -> None:
         super().__init__()
 
         self.type = type_
-        assert self.type in ["rt", "tp", "user", "service"
-                             ], f"类型不符，请在{['rt','tp','user','service']}中选择"
+        assert self.type in ["rt", "tp", "user", "service"], f"类型不符，请在{['rt', 'tp', 'user', 'service']}中选择"
 
     def get_row_data(self):
         if self.type == "rt":
@@ -61,7 +67,7 @@ class InfoDataset(DatasetBase):
         self.type = type_
         super().__init__(type_)
         assert self.type in ["user",
-                             "service"], f"类型不符，请在{['user','service']}中选择"
+                             "service"], f"类型不符，请在{['user', 'service']}中选择"
         self.enabled_columns = enabled_columns
         self.info_data = self.get_row_data()
         self._fit()

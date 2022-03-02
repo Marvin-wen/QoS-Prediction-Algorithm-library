@@ -35,7 +35,7 @@ class UMEANModel(object):
             y_lis.append(y)
             y_pred_lis.append(y_pred)
         print(
-            f"Predicting done! cold_boot:{cold_boot_cnt/len(triad)*100:.4f}%")
+            f"Predicting done! code_boot:{cold_boot_cnt / len(traid) * 100:.4f}%")
         return y_lis, y_pred_lis
 
 

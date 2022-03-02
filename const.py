@@ -1,5 +1,6 @@
 import os
 
+# 获取项目根路径
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATASET_DIRNAME = "data"  # 数据集放在根目录的data文件夹下
@@ -18,3 +19,5 @@ USER_DIR = os.path.join(DATASET_DIR, USERS_NAME)
 WS_DIR = os.path.join(DATASET_DIR, WSLIST_NAME)
 
 __all__ = ["RT_MATRIX_DIR", "TP_MATRIX_DIR", "USER_DIR", "WS_DIR"]
+
+

@@ -5,7 +5,10 @@ from utils.model_util import freeze_random
 from .model import MFModel
 """
 RESULT MF:
-
+Density:0.05,type:rt,mae:0.6716546313096282,mse:2.452621597109724,rmse:1.5660847988246753
+Density:0.1,type:rt,mae:0.5169443118586329,mse:1.7229506095252545,rmse:1.3126121321720496
+Density:0.15,type:rt,mae:0.47249373047649473,mse:1.5053596856557376,rmse:1.2269310028097495
+Density:0.2,type:rt,mae:0.4395753397852491,mse:1.370772157241582,rmse:1.1707997938339338
 """
 
 freeze_random()  # 冻结随机数 保证结果一致

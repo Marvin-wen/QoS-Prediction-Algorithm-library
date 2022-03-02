@@ -20,20 +20,23 @@ class UMEANModel(object):
             self.u_mean[uid] = np.average(rate_lis)
         print("Prepare umeans done!")
 
-    def predict(self, triad, code_boot=None):
+    def predict(self, triad, cold_boot=None):
         assert self.u_mean != {}, "Please fit first. e.g. model.fit(triad)"
         y_lis = []
         y_pred_lis = []
-        code_boot_cnt = 0
+        cold_boot_cnt = 0
         print("Predicting...")
         for row in tqdm(triad):
             uid, iid, y = int(row[0]), int(row[1]), float(row[2])
-            y_pred = self.u_mean.get(uid, code_boot)
+            y_pred = self.u_mean.get(uid, cold_boot)
             if y_pred == None:
-                code_boot_cnt += 1
+                cold_boot_cnt += 1
                 continue
             y_lis.append(y)
             y_pred_lis.append(y_pred)
         print(
-            f"Predicting done! code_boot:{code_boot_cnt/len(triad)*100:.4f}%")
+            f"Predicting done! cold_boot:{cold_boot_cnt/len(triad)*100:.4f}%")
         return y_lis, y_pred_lis
+
+
+

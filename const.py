@@ -1,6 +1,6 @@
 import os
 
-BASE_DIR = os.path.abspath(os.path.dirname("__file__"))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATASET_DIRNAME = "data"  # 数据集放在根目录的data文件夹下
 

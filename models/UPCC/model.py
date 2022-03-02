@@ -45,6 +45,7 @@ class UPCCModel(object):
                     except Exception as e:
                         sim = 0
                 similarity_matrix[i][j] = sim
+                similarity_matrix[j][i] = sim
 
         return similarity_matrix
 

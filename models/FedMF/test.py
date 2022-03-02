@@ -16,7 +16,7 @@ Density:0.2,type:rt,mae:0.43765304163567553,mse:1.3690546770840173,rmse:1.170066
 
 freeze_random()  # 冻结随机数 保证结果一致
 
-for density in [0.05, 0.1, 0.15, 0.2]:
+for density in [0.01, 0.1, 0.15, 0.2]:
 
     # 1
     type_ = "rt"

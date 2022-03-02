@@ -1,26 +1,32 @@
+from cmath import log
 from data import MatrixDataset
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
 
 from .model import UPCCModel
+from utils import logger
 """
 RESULT UPCC:
-Density:0.05,type:rt,mae:0.7334384829325753,mse:2.6762234507993745,rmse:1.635916700446381
-Density:0.1,type:rt,mae:0.628473598766662,mse:2.1314974642028677,rmse:1.4599648845786901
-Density:0.15,type:rt,mae:0.5801255883194202,mse:1.8990928388487136,rmse:1.3780757739865808
-Density:0.2,type:rt,mae:0.5585672563669457,mse:1.7809544697289579,rmse:1.3345240611277707
 
-Density:0.05,type:tp,mae:31.433279057978826,mse:5942.681984715335,rmse:77.08879286067031
-Density:0.1,type:tp,mae:24.705758868958824,mse:4119.820902493704,rmse:64.18583101038503
-Density:0.15,type:tp,mae:22.348603068910084,mse:3475.7766495526553,rmse:58.95571770025919
-Density:0.2,type:tp,mae:21.212877869416783,mse:3153.9556887043786,rmse:56.16008982101416
+Density:0.05,type:rt,mae:0.6989300707521432,mse:2.7737428845756824,rmse:1.6654557588166916
+Density:0.1,type:rt,mae:0.5598082846452833,mse:2.1501265216568024,rmse:1.4663309727536966
+Density:0.15,type:rt,mae:0.49665146697083623,mse:1.822202449824236,rmse:1.349889791732731
+Density:0.2,type:rt,mae:0.4640162396499109,mse:1.6248480178887317,rmse:1.2746952647157406
+
+Density:0.05,type:tp,mae:36.44804703916447,mse:7770.4758688545135,rmse:88.15030271561473
+Density:0.1,type:tp,mae:24.80577811244719,mse:4828.352330817265,rmse:69.4863463625572
+Density:0.15,type:tp,mae:20.103870591282085,mse:3577.5086548164077,rmse:59.812278462004834
+Density:0.2,type:tp,mae:17.75683423278253,mse:2891.0985679440246,rmse:53.76893683107399
+
+
+
 """
 
 freeze_random()  # 冻结随机数 保证结果一致
 
 for density in [0.05, 0.1, 0.15, 0.2]:
 
-    type_ = "rt"
+    type_ = "tp"
     rt_data = MatrixDataset(type_)
     train_data, test_data = rt_data.split_train_test(density)
 
@@ -33,3 +39,4 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     rmse_ = rmse(y, y_pred)
 
     print(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
+    logger.info(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")

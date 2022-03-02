@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from root import absolute
 from torch import nn
+
 """
     Some handy functions for model training ...
 """
@@ -47,7 +48,6 @@ def use_cuda(enabled, device_id=0):
 
 
 def freeze_random(seed=2021):
-
     torch.cuda.manual_seed(seed)
     torch.manual_seed(seed)
     random.seed(seed)
@@ -63,12 +63,12 @@ def triad_to_matrix(triad, nan_symbol=-1):
 
     """
     # 注意下标应该为int
-    if not isinstance(triad, np.ndarray):
-        triad = np.array(triad)
-    x_max = triad[:, 0].max().astype(int)
-    y_max = triad[:, 1].max().astype(int)
-    matrix = np.full((x_max + 1, y_max + 1), nan_symbol, dtype=triad.dtype)
-    matrix[triad[:, 0].astype(int), triad[:, 1].astype(int)] = triad[:, 2]
+    if not isinstance(traid, np.ndarray):
+        traid = np.array(traid)
+    x_max = traid[:, 0].max().astype(int)  # 用户数量
+    y_max = traid[:, 1].max().astype(int)  # 项目数量
+    matrix = np.full((x_max + 1, y_max + 1), nan_symbol, dtype=traid.dtype)  # 初始化QoS矩阵
+    matrix[traid[:, 0].astype(int), traid[:, 1].astype(int)] = traid[:, 2]  # 将评分值放到QoS矩阵的对应位置中
     return matrix
 
 
@@ -77,13 +77,21 @@ def split_d_triad(d_triad):
     return np.array(l[:, 0].tolist()), l[:, 1].tolist()
 
 
-def nonzero_mean(matrix, nan_symbol):
+def nonzero_user_mean(matrix, nan_symbol):
     """快速计算一个矩阵的行均值
     """
     m = copy.deepcopy(matrix)
     m[matrix == nan_symbol] = 0
-    t = (m != 0).sum(axis=-1)
-    return (m.sum(axis=-1) / t).squeeze()
+    t = (m != 0).sum(axis=-1)  # 每行非0元素的个数
+    res = (m.sum(axis=-1) / t).squeeze()
+    res[np.isnan(res)] = 0
+    return res
+
+
+def nonzero_item_mean(matrix, nan_symbol):
+    """快速计算一个矩阵的列均值
+    """
+    return nonzero_user_mean(matrix.T, nan_symbol)
 
 
 def use_optimizer(network, opt, lr):
@@ -114,6 +122,7 @@ def init_weights(model, init_type, init_gain):
     Reference:
         https://github.com/DS3Lab/forest-prediction/blob/master/pix2pix/models/networks.py
     """
+
     def init_func(m):
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and (classname.find('Conv') != -1
@@ -167,4 +176,4 @@ if __name__ == "__main__":
     a, b = split_d_triad(d_triad)
     t2m = triad_to_matrix(a)
     print(t2m)
-    print(nonzero_mean(t2m, -1))
+    print(nonzero_user_mean(t2m, -1))

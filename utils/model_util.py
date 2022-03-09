@@ -7,7 +7,6 @@ import numpy as np
 import torch
 from root import absolute
 from torch import nn
-
 """
     Some handy functions for model training ...
 """
@@ -63,12 +62,14 @@ def triad_to_matrix(triad, nan_symbol=-1):
 
     """
     # 注意下标应该为int
-    if not isinstance(traid, np.ndarray):
-        traid = np.array(traid)
-    x_max = traid[:, 0].max().astype(int)  # 用户数量
-    y_max = traid[:, 1].max().astype(int)  # 项目数量
-    matrix = np.full((x_max + 1, y_max + 1), nan_symbol, dtype=traid.dtype)  # 初始化QoS矩阵
-    matrix[traid[:, 0].astype(int), traid[:, 1].astype(int)] = traid[:, 2]  # 将评分值放到QoS矩阵的对应位置中
+    if not isinstance(triad, np.ndarray):
+        triad = np.array(triad)
+    x_max = triad[:, 0].max().astype(int)  # 用户数量
+    y_max = triad[:, 1].max().astype(int)  # 项目数量
+    matrix = np.full((x_max + 1, y_max + 1), nan_symbol,
+                     dtype=triad.dtype)  # 初始化QoS矩阵
+    matrix[triad[:, 0].astype(int),
+           triad[:, 1].astype(int)] = triad[:, 2]  # 将评分值放到QoS矩阵的对应位置中
     return matrix
 
 
@@ -122,7 +123,6 @@ def init_weights(model, init_type, init_gain):
     Reference:
         https://github.com/DS3Lab/forest-prediction/blob/master/pix2pix/models/networks.py
     """
-
     def init_func(m):
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and (classname.find('Conv') != -1

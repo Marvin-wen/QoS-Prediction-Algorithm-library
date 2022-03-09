@@ -2,7 +2,7 @@ from cmath import log
 from data import MatrixDataset
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
-
+from utils import logger
 from model import UPCCModel
 
 """

@@ -1,6 +1,6 @@
 from data import MatrixDataset
 from utils.evaluation import mae, mse, rmse
-from model import UIPCCModel
+from models.UIPCC import UIPCCModel
 
 # 冻结随机数
 from utils.model_util import freeze_random

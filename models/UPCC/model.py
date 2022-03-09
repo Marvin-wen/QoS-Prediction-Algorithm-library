@@ -184,5 +184,5 @@ if __name__ == "__main__":
     # y_pred 3.5
 
     upcc = UPCCModel()
-    upcc.fit(traid)
+    upcc.fit(triad)
     upcc.predict(test)

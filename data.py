@@ -19,6 +19,7 @@ from utils.preprocess import l2_norm, min_max_scaler, z_score
 class ToTorchDataset(Dataset):
     """将一个三元组转成Torch Dataset的形式
     """
+
     def __init__(self, traid) -> None:
         super().__init__()
         self.traid = traid
@@ -30,8 +31,7 @@ class ToTorchDataset(Dataset):
         return len(self.traid)
 
     def __getitem__(self, index):
-        return self.user_tensor[index], self.item_tensor[
-            index], self.target_tensor[index]
+        return self.user_tensor[index], self.item_tensor[index], self.target_tensor[index]
 
 
 class DatasetBase(object):
@@ -42,6 +42,7 @@ class DatasetBase(object):
     user: userlist
     service: wslist
     """
+
     def __init__(self, type_) -> None:
         super().__init__()
 
@@ -49,6 +50,7 @@ class DatasetBase(object):
         assert self.type in ["rt", "tp", "user", "service"], f"类型不符，请在{['rt', 'tp', 'user', 'service']}中选择"
 
     def get_row_data(self):
+        data = None
         if self.type == "rt":
             data = np.loadtxt(RT_MATRIX_DIR)
         elif self.type == "tp":
@@ -63,6 +65,7 @@ class DatasetBase(object):
 class InfoDataset(DatasetBase):
     """用户和服务的详细描述数据
     """
+
     def __init__(self, type_, enabled_columns: list) -> None:
         self.type = type_
         super().__init__(type_)
@@ -108,7 +111,7 @@ class InfoDataset(DatasetBase):
 class MatrixDataset(DatasetBase):
     def __init__(self, type_) -> None:
         super().__init__(type_)
-        assert type_ in ["rt", "tp"], f"类型不符，请在{['rt','tp']}中选择"
+        assert type_ in ["rt", "tp"], f"类型不符，请在{['rt', 'tp']}中选择"
         self.matrix = self._get_row_data()
         self.scaler = None
 
@@ -196,7 +199,7 @@ class MatrixDataset(DatasetBase):
 
         train_n = int(self.row_n * self.col_n * density)  # 训练集数量
         train_data, test_data = traid_data[:train_n, :], traid_data[
-            train_n:, :]
+                                                         train_n:, :]
 
         return train_data, test_data
 

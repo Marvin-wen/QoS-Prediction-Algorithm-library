@@ -6,29 +6,22 @@ from utils.evaluation import mae, mse, rmse
 from utils.model_util import load_checkpoint, save_checkpoint
 from utils.mylogger import TNLog
 
-from .utils import train_single_epoch_with_dataloader,train_mult_epochs_with_dataloader
+from .utils import train_single_epoch_with_dataloader, train_mult_epochs_with_dataloader
 
 
 class ModelBase(object):
     def __init__(self, loss_fn, use_gpu=True) -> None:
         super().__init__()
         self.loss_fn = loss_fn  # 损失函数
+        self.optimizer = None
         self.tb = SummaryWriter()
-        self.device = ("cuda" if
-                       (use_gpu and torch.cuda.is_available()) else "cpu")
+        self.device = ("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = self.__class__.__name__
         self.logger = TNLog(self.name)  # 日志
         self.logger.initial_logger()
 
-    def fit(self,
-            train_loader,
-            epochs,
-            optimizer,
-            eval_=True,
-            eval_loader=None,
-            save_model=False,
-            save_filename=""):
-        """Eval 为True自动保存最优模型（推荐），save_model为True间隔epoch后自动保存模型
+    def fit(self, train_loader, epochs, optimizer, eval_=True, eval_loader=None, save_model=True, save_filename=""):
+        """Eval为True: 自动保存最优模型（推荐）, save_model为True: 间隔epoch后自动保存模型
 
         Args:
             train_loader : 训练集
@@ -50,12 +43,11 @@ class ModelBase(object):
         for epoch in tqdm(range(epochs)):
             train_batch_loss = 0
             eval_total_loss = 0
-            for batch_id, batch in tqdm(enumerate(train_loader)):
-                user, item, rating = batch[0].to(self.device), batch[1].to(
-                    self.device), batch[2].to(self.device)
-                y_real = rating.reshape(-1, 1)
+            for batch_id, batch in enumerate(train_loader):
+                users, items, ratings = batch[0].to(self.device), batch[1].to(self.device), batch[2].to(self.device)
+                y_real = ratings.reshape(-1, 1)
                 self.optimizer.zero_grad()
-                y_pred = self.model(user, item)
+                y_pred = self.model(users, items)
                 # must be (1. nn output, 2. target)
                 loss = self.loss_fn(y_pred, y_real)
                 loss.backward()
@@ -66,21 +58,19 @@ class ModelBase(object):
             loss_per_epoch = train_batch_loss / len(train_loader)
             train_loss_list.append(loss_per_epoch)
 
-            self.logger.info(
-                f"Training Epoch:[{epoch}/{epochs}] Loss:{loss_per_epoch:.4f}")
+            self.logger.info(f"Training Epoch:[{epoch}/{epochs}] Loss:{loss_per_epoch:.4f}")
             self.tb.add_scalar("Training Loss", loss_per_epoch, epoch)
 
+            # 验证
             if (epoch + 1) % 10 == 0:
-
-                # 验证
                 if eval_ == True:
                     assert eval_loader is not None, "Please offer eval dataloader"
                     self.model.eval()
                     with torch.no_grad():
                         for batch_id, batch in tqdm(enumerate(eval_loader)):
-                            user, item, rating = batch[0].to(
-                                self.device), batch[1].to(
-                                    self.device), batch[2].to(self.device)
+                            user, item, rating = batch[0].to(self.device), \
+                                                 batch[1].to(self.device), \
+                                                 batch[2].to(self.device)
                             y_pred = self.model(user, item)
                             y_real = rating.reshape(-1, 1)
                             loss = self.loss_fn(y_pred, y_real)
@@ -108,7 +98,7 @@ class ModelBase(object):
                         else:
                             ckpt = {}
                         save_checkpoint(ckpt, is_best, f"output/{self.name}",
-                                        f"loss_{save_filename}_{best_loss:.4f}.ckpt")
+                                        f"{save_filename}_loss-{best_loss:.4f}.ckpt")
 
                 elif save_model:
                     ckpt = {
@@ -117,9 +107,8 @@ class ModelBase(object):
                         "optim": optimizer.state_dict(),
                         "best_loss": loss_per_epoch
                     }
-                    save_checkpoint(
-                        ckpt, save_model, f"output/{self.name}",
-                        f"{save_filename}_loss_{loss_per_epoch:.4f}.ckpt")
+                    save_checkpoint(ckpt, save_model, f"output/{self.name}",
+                                    f"{save_filename}_loss_{loss_per_epoch:.4f}.ckpt")
 
     def predict(self, test_loader, resume=False, path=None):
         """模型预测
@@ -164,8 +153,8 @@ class MemoryBase(object):
     def __init__(self) -> None:
         super().__init__()
 
-    def fit():
+    def fit(self):
         raise NotImplementedError
 
-    def train():
+    def train(self):
         raise NotImplementedError

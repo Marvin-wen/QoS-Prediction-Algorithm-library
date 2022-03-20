@@ -19,19 +19,19 @@ from utils.preprocess import l2_norm, min_max_scaler, z_score
 class ToTorchDataset(Dataset):
     """将一个三元组转成Torch Dataset的形式
     """
-
-    def __init__(self, traid) -> None:
+    def __init__(self, triad) -> None:
         super().__init__()
-        self.traid = traid
-        self.user_tensor = torch.LongTensor([i[0] for i in traid])
-        self.item_tensor = torch.LongTensor([i[1] for i in traid])
-        self.target_tensor = torch.FloatTensor([i[2] for i in traid])
+        self.triad = triad
+        self.user_tensor = torch.LongTensor([i[0] for i in triad])
+        self.item_tensor = torch.LongTensor([i[1] for i in triad])
+        self.target_tensor = torch.FloatTensor([i[2] for i in triad])
 
     def __len__(self):
-        return len(self.traid)
+        return len(self.triad)
 
     def __getitem__(self, index):
-        return self.user_tensor[index], self.item_tensor[index], self.target_tensor[index]
+        return self.user_tensor[index], self.item_tensor[
+            index], self.target_tensor[index]
 
 
 class DatasetBase(object):
@@ -42,7 +42,6 @@ class DatasetBase(object):
     user: userlist
     service: wslist
     """
-
     def __init__(self, type_) -> None:
         super().__init__()
 
@@ -50,7 +49,6 @@ class DatasetBase(object):
         assert self.type in ["rt", "tp", "user", "service"], f"类型不符，请在{['rt', 'tp', 'user', 'service']}中选择"
 
     def get_row_data(self):
-        data = None
         if self.type == "rt":
             data = np.loadtxt(RT_MATRIX_DIR)
         elif self.type == "tp":
@@ -65,7 +63,6 @@ class DatasetBase(object):
 class InfoDataset(DatasetBase):
     """用户和服务的详细描述数据
     """
-
     def __init__(self, type_, enabled_columns: list) -> None:
         self.type = type_
         super().__init__(type_)
@@ -111,7 +108,7 @@ class InfoDataset(DatasetBase):
 class MatrixDataset(DatasetBase):
     def __init__(self, type_) -> None:
         super().__init__(type_)
-        assert type_ in ["rt", "tp"], f"类型不符，请在{['rt', 'tp']}中选择"
+        assert type_ in ["rt", "tp"], f"类型不符，请在{['rt','tp']}中选择"
         self.matrix = self._get_row_data()
         self.scaler = None
 
@@ -148,7 +145,7 @@ class MatrixDataset(DatasetBase):
         for uid, iid in zip(non_zero_index_tuple[0], non_zero_index_tuple[1]):
             triad_data.append([uid, iid, row_data[uid, iid]])
         triad_data = np.array(triad_data)
-        print("traid_data size:", triad_data.shape)
+        print("triad_data size:", triad_data.shape)
         return triad_data
 
     def split_train_test(self,
@@ -156,13 +153,13 @@ class MatrixDataset(DatasetBase):
                          nan_symbol=-1,
                          shuffle=True,
                          normalize_type=None):
-        traid_data = self.get_triad(nan_symbol)
+        triad_data = self.get_triad(nan_symbol)
 
         if shuffle:
-            np.random.shuffle(traid_data)
+            np.random.shuffle(triad_data)
 
         train_n = int(self.row_n * self.col_n * density)  # 训练集数量
-        train_data, test_data = traid_data[:train_n], traid_data[train_n:]
+        train_data, test_data = triad_data[:train_n], triad_data[train_n:]
         if normalize_type is not None:
             self.__norm_train_test_data(train_data, test_data, normalize_type)
 
@@ -192,14 +189,14 @@ class MatrixDataset(DatasetBase):
 
     def mini_split_train_test(self, density, nan_symbol=-1, shuffle=True):
 
-        traid_data = self.get_mini_triad(nan_symbol)
+        triad_data = self.get_mini_triad(nan_symbol)
 
         if shuffle:
-            np.random.shuffle(traid_data)
+            np.random.shuffle(triad_data)
 
         train_n = int(self.row_n * self.col_n * density)  # 训练集数量
-        train_data, test_data = traid_data[:train_n, :], traid_data[
-                                                         train_n:, :]
+        train_data, test_data = triad_data[:train_n, :], triad_data[
+            train_n:, :]
 
         return train_data, test_data
 

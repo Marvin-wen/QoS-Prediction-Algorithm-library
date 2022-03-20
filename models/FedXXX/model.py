@@ -11,7 +11,7 @@ from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 from utils.decorator import timeit
 from utils.evaluation import mae, mse, rmse
-from utils.model_util import (load_checkpoint, save_checkpoint, split_d_traid,
+from utils.model_util import (load_checkpoint, save_checkpoint, split_d_triad,
                               use_optimizer)
 from utils.mylogger import TNLog
 
@@ -91,7 +91,7 @@ class FedXXXLaunch(FedModelBase):
     """联邦的版本
     """
     def __init__(self,
-                 d_traid,
+                 d_triad,
                  user_params,
                  item_params,
                  linear_layers,
@@ -106,13 +106,13 @@ class FedXXXLaunch(FedModelBase):
         self._model = FedXXX(user_params, item_params, linear_layers,
                              output_dim, activation)
         self.server = Server()
-        self.clients = Clients(d_traid, self._model, self.device)
+        self.clients = Clients(d_triad, self._model, self.device)
         self.optimizer = optimizer
         self.loss_fn = loss_fn
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
 
-    def fit(self, epochs, lr, test_d_traid, fraction=1,save_filename=""):
+    def fit(self, epochs, lr, test_d_triad, fraction=1, save_filename=""):
         best_train_loss = None
         is_best = False
         for epoch in tqdm(range(epochs), desc="Traing Epochs "):
@@ -157,11 +157,12 @@ class FedXXXLaunch(FedModelBase):
                 "epoch": epoch + 1,
                 "best_loss": best_train_loss
             }
-            save_checkpoint(ckpt, is_best, f"output/{self.name}",
-                            f"loss_{save_filename}_{best_train_loss:.4f}.ckpt")
+            save_checkpoint(
+                ckpt, is_best, f"output/{self.name}",
+                f"loss_{save_filename}_{best_train_loss:.4f}.ckpt")
 
             if (epoch + 1) % 10 == 0:
-                y_list, y_pred_list = self.predict(test_d_traid)
+                y_list, y_pred_list = self.predict(test_d_triad)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)
                 rmse_ = rmse(y_list, y_pred_list)
@@ -171,7 +172,7 @@ class FedXXXLaunch(FedModelBase):
 
     # 这里的代码写的很随意 没时间优化了
     def predict(self,
-                d_traid,
+                d_triad,
                 similarity_th=0.9,
                 w=0.8,
                 use_similarity=False,
@@ -189,8 +190,8 @@ class FedXXXLaunch(FedModelBase):
             self._model.load_state_dict(s_params)
         y_pred_list = []
         y_list = []
-        traid, p_traid = split_d_traid(d_traid)
-        p_traid_dataloader = DataLoader(ToTorchDataset(p_traid),
+        triad, p_triad = split_d_triad(d_triad)
+        p_triad_dataloader = DataLoader(ToTorchDataset(p_triad),
                                         batch_size=2048)  # 这里可以优化 这样写不是很好
 
         def upcc():
@@ -213,7 +214,7 @@ class FedXXXLaunch(FedModelBase):
         self._model.eval()
         with torch.no_grad():
             # for batch_id, batch in tqdm(enumerate(test_loader)):
-            for batch_id, batch in tqdm(enumerate(p_traid_dataloader),
+            for batch_id, batch in tqdm(enumerate(p_triad_dataloader),
                                         desc="Model Predict"):
                 user, item, rate = batch[0].to(self.device), batch[1].to(
                     self.device), batch[2].to(self.device)
@@ -242,7 +243,7 @@ class FedXXXLaunch(FedModelBase):
 
                 similarity_matrix = self.clients.get_similarity_matrix()
 
-                for row in tqdm(traid, desc="CF Predict"):
+                for row in tqdm(triad, desc="CF Predict"):
                     uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
                     sim = upcc()
                     y_pred_sim_list.append(sim)

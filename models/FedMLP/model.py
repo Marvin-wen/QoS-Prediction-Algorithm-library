@@ -65,7 +65,7 @@ class FedMLP(nn.Module):
 
 class FedMLPModel(FedModelBase):
     def __init__(self,
-                 traid,
+                 triad,
                  loss_fn,
                  n_user,
                  n_item,
@@ -80,7 +80,7 @@ class FedMLPModel(FedModelBase):
         self._model = FedMLP(n_user, n_item, dim, layers, output_dim)
 
         self.server = Server()
-        self.clients = Clients(traid, self._model, self.device)
+        self.clients = Clients(triad, self._model, self.device)
 
         self.optimizer = optimizer
         self.loss_fn = loss_fn
@@ -99,7 +99,7 @@ class FedMLPModel(FedModelBase):
             self.clients[uid].evaluate()
 
     # todo how to add loss?
-    def fit(self, epochs, lr, test_traid, fraction=1):
+    def fit(self, epochs, lr, test_triad, fraction=1):
         best_train_loss = None
         is_best = False
         for epoch in tqdm(range(epochs), desc="Training Epochs"):
@@ -147,7 +147,7 @@ class FedMLPModel(FedModelBase):
                             f"loss_{best_train_loss:.4f}.ckpt")
 
             if (epoch + 1) % 20 == 0:
-                y_list, y_pred_list = self.predict(test_traid)
+                y_list, y_pred_list = self.predict(test_triad)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)
                 rmse_ = rmse(y_list, y_pred_list)

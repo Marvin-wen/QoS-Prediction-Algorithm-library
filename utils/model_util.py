@@ -5,11 +5,8 @@ import shutil
 
 import numpy as np
 import torch
-import torch.nn.init as init
 from root import absolute
-from scipy.sparse.construct import rand
 from torch import nn
-
 """
     Some handy functions for model training ...
 """
@@ -56,26 +53,28 @@ def freeze_random(seed=2021):
     np.random.seed(seed)
 
 
-def traid_to_matrix(traid, nan_symbol=-1):
+def triad_to_matrix(triad, nan_symbol=-1):
     """三元组转矩阵
 
     Args:
-        traid : 三元组
+        triad : 三元组
         nan_symbol : 非零数据的表示方法. Defaults to -1.
 
     """
     # 注意下标应该为int
-    if not isinstance(traid, np.ndarray):
-        traid = np.array(traid)
-    x_max = traid[:, 0].max().astype(int)  # 用户数量
-    y_max = traid[:, 1].max().astype(int)  # 项目数量
-    matrix = np.full((x_max + 1, y_max + 1), nan_symbol, dtype=traid.dtype)  # 初始化QoS矩阵
-    matrix[traid[:, 0].astype(int), traid[:, 1].astype(int)] = traid[:, 2]  # 将评分值放到QoS矩阵的对应位置中
+    if not isinstance(triad, np.ndarray):
+        triad = np.array(triad)
+    x_max = triad[:, 0].max().astype(int)  # 用户数量
+    y_max = triad[:, 1].max().astype(int)  # 项目数量
+    matrix = np.full((x_max + 1, y_max + 1), nan_symbol,
+                     dtype=triad.dtype)  # 初始化QoS矩阵
+    matrix[triad[:, 0].astype(int),
+           triad[:, 1].astype(int)] = triad[:, 2]  # 将评分值放到QoS矩阵的对应位置中
     return matrix
 
 
-def split_d_traid(d_traid):
-    l = np.array(d_traid, dtype=np.object)
+def split_d_triad(d_triad):
+    l = np.array(d_triad, dtype=np.object)
     return np.array(l[:, 0].tolist()), l[:, 1].tolist()
 
 
@@ -98,11 +97,11 @@ def nonzero_item_mean(matrix, nan_symbol):
 
 def use_optimizer(network, opt, lr):
     if opt == 'sgd':
-        optimizer = torch.optim.SGD(network.parameters(),
-                                    lr=lr,
-                                    momentum=0.99)
+        optimizer = torch.optim.SGD(network.parameters(), lr=lr, momentum=0.99)
     elif opt == 'adam':
-        optimizer = torch.optim.Adam(network.parameters(), lr=lr)
+        optimizer = torch.optim.Adam(network.parameters(),
+                                     lr=lr,
+                                     weight_decay=1e-8)
     return optimizer
 
 
@@ -124,7 +123,6 @@ def init_weights(model, init_type, init_gain):
     Reference:
         https://github.com/DS3Lab/forest-prediction/blob/master/pix2pix/models/networks.py
     """
-
     def init_func(m):
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and (classname.find('Conv') != -1
@@ -171,11 +169,11 @@ def init_net(model, init_type, init_gain, gpu_ids):
 
 
 if __name__ == "__main__":
-    d_traid = [[[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
+    d_triad = [[[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
                [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
                [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
                [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]]]
-    a, b = split_d_traid(d_traid)
-    t2m = traid_to_matrix(a)
+    a, b = split_d_triad(d_triad)
+    t2m = triad_to_matrix(a)
     print(t2m)
     print(nonzero_user_mean(t2m, -1))

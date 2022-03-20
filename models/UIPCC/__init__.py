@@ -1,1 +1,1 @@
-from model import UIPCCModel
+from .model import UIPCCModel

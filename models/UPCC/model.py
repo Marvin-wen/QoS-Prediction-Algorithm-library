@@ -110,7 +110,7 @@ class UPCCModel(object):
         cold_boot_cnt = 0  # 冷启动统计
         assert self.u_mean is not None, "Please fit first e.g. model.fit()"
 
-        for row in tqdm(traid, desc="Predict... "):
+        for row in tqdm(triad, desc="Predict... "):
             uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
             # 冷启动: 新用户因为没有计算过相似用户, 因此无法预测评分
             if uid + 1 > len(self.u_mean):
@@ -168,7 +168,7 @@ def adjusted_cosine_similarity(x, y, intersect, id_x, id_y, u_mean):
     return multiply_sum / math.sqrt(pow_sum_x * pow_sum_y)
 
 if __name__ == "__main__":
-    traid = np.array([
+    triad = np.array([
         [0, 0, 1],
         [0, 1, 3],
         [1, 0, 1],
@@ -184,5 +184,5 @@ if __name__ == "__main__":
     # y_pred 3.5
 
     upcc = UPCCModel()
-    upcc.fit(traid)
+    upcc.fit(triad)
     upcc.predict(test)

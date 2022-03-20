@@ -6,10 +6,14 @@ def timeit(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         s = time.time()
-        r = func(*args, **kwargs)
-        e = time.time()
-        print(f"Time Costing:{e-s:.2f}")
-        return r
+        try:
+            r = func(*args, **kwargs)
+            return r
+        except Exception as e:
+            raise e
+        finally:
+            e = time.time()
+            print(f"Time Costing:{e-s:.2f}")
 
     return wrapper
 

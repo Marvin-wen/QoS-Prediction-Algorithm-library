@@ -1,5 +1,7 @@
+from os import fchdir
 import random
 from collections import UserDict
+from lib2to3.pgen2.driver import Driver
 
 import numpy as np
 import torch
@@ -31,19 +33,25 @@ class FedGMF(nn.Module):
         self.embedding_item = nn.Embedding(num_embeddings=self.num_items,
                                            embedding_dim=self.latent_dim)
 
-        self.fc_output = nn.Linear(self.latent_dim, output_dim)
+        self.fc_layer = nn.Sequential(nn.Linear(self.latent_dim, 16),
+                                      nn.Dropout(0.3), nn.Linear(16, 64),
+                                      nn.Dropout(0.5), nn.Linear(64, 32),
+                                      nn.Dropout(0.2))
+        self.fc_output = nn.Linear(32, output_dim)
 
     def forward(self, user_idx, item_idx):
         user_embedding = self.embedding_user(user_idx)
         item_embedding = self.embedding_item(item_idx)
         element_product = torch.mul(user_embedding, item_embedding)
-        x = self.fc_output(element_product)
+        x = nn.Dropout()(element_product)
+        x = self.fc_layer(x)
+        x = self.fc_output(x)
         return x
 
 
 class FedGMFModel(FedModelBase):
     def __init__(self,
-                 traid,
+                 triad,
                  loss_fn,
                  n_user,
                  n_item,
@@ -57,20 +65,19 @@ class FedGMFModel(FedModelBase):
         self._model = FedGMF(n_user, n_item, dim, output_dim)
 
         self.server = Server()
-        self.clients = Clients(traid, self._model, self.device)
+        self.clients = Clients(triad, self._model, self.device)
 
         self.optimizer = optimizer
         self.loss_fn = loss_fn
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
 
-
     def evaluate_selected_clients(self, sampled_client_indices):
         for uid in sampled_client_indices:
             self.clients[uid].evaluate()
 
     # todo how to add loss?
-    def fit(self, epochs, lr, test_traid, fraction=1):
+    def fit(self, epochs, lr, test_triad, fraction=1):
         best_train_loss = None
         is_best = False
         for epoch in tqdm(range(epochs), desc="Training Epochs"):
@@ -117,8 +124,8 @@ class FedGMFModel(FedModelBase):
             save_checkpoint(ckpt, is_best, f"output/{self.name}",
                             f"loss_{best_train_loss:.4f}.ckpt")
 
-            if (epoch + 1) % 20 == 0:
-                y_list, y_pred_list = self.predict(test_traid)
+            if (epoch + 1) % 10 == 0:
+                y_list, y_pred_list = self.predict(test_triad)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)
                 rmse_ = rmse(y_list, y_pred_list)

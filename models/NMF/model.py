@@ -11,6 +11,7 @@ from utils.model_util import triad_to_matrix
 class NMFModel(object):
     """Non-negative Matrix Factorization Model
     """
+
     def __init__(self, n_user, n_item, latent_dim) -> None:
         super().__init__()
         self.n_user = n_user
@@ -37,64 +38,6 @@ class NMFModel(object):
         _matrix = copy.deepcopy(self.matrix)
         for i in range(n):
             self.matrix[:, i] = _matrix[:, i] / np.sum(_matrix[:, i])
-
-    def fit2(self,
-            triad,
-            test,
-            lr,
-            epochs=100,
-            verbose=False,
-            early_stop=True,
-            normalize=False):
-
-        if (not self.user_matrix and not self.item_matrix) or self.matrix:
-            self._init_matrix(triad)
-
-        # 测试了貌似没效果
-        if normalize:
-            self._normalize()
-
-        for epoch in tqdm(range(epochs), desc="NMF Training Epoch"):
-
-            tmp_user_matrix = copy.deepcopy(self.user_matrix)
-            tmp_item_matrix = copy.deepcopy(self.item_matrix)
-
-            for row in triad:
-
-                user_idx,item_idx,y = int(row[0]),int(row[1]),float(row[2])
-
-                # 预测值计算
-                y_pred = self.user_matrix[user_idx] @ self.item_matrix[item_idx].T
-                e_ui = y - y_pred
-                # 计算用户梯度 w
-
-                w_grad = 
-
-
-
-                # 计算物品梯度 h
-
-            up_W = self.matrix @ self.item_matrix.T
-            down_W = self.user_matrix @ self.item_matrix @ self.item_matrix.T
-
-            self.user_matrix = self.user_matrix * up_W / down_W
-
-            up_H = self.user_matrix.T @ self.matrix
-            down_H = self.user_matrix.T @ self.user_matrix @ self.item_matrix
-
-            self.item_matrix = self.item_matrix * up_H / down_H
-
-
-            if early_stop and np.mean(np.abs(self.user_matrix - tmp_user_matrix)) < 1e-4 and \
-                np.mean(np.abs(self.item_matrix - tmp_item_matrix)) < 1e-4:
-                print('Converged')
-                break
-
-            if verbose and (epoch + 1) % 200 == 0:
-                y_list, y_pred_list = self.predict(test)
-                print(f"[{epoch}/{epochs}] MAE:{mae(y_list,y_pred_list):.5f}")
-lidean
-        
 
     def fit(self,
             triad,

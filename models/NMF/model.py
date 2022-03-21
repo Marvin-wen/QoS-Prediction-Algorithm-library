@@ -9,7 +9,7 @@ from utils.model_util import triad_to_matrix
 
 
 class NMFModel(object):
-    """FunkSVD
+    """Non-negative Matrix Factorization Model
     """
     def __init__(self, n_user, n_item, latent_dim) -> None:
         super().__init__()

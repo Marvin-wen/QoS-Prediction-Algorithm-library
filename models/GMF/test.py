@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
 
-from .model import GMFModel
+from model import GMFModel
 """
 RESULT GMF:
 """

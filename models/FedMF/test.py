@@ -12,16 +12,18 @@ Density:0.1,type:rt,mae:0.5071641017174705,mse:1.7203263210368958,rmse:1.3116121
 Density:0.15,type:rt,mae:0.46475316376452325,mse:1.4854062714808631,rmse:1.2187724445034287
 Density:0.2,type:rt,mae:0.43765304163567553,mse:1.3690546770840173,rmse:1.1700660994508034
 
+
+
 """
 
 freeze_random()  # 冻结随机数 保证结果一致
 
-for density in [0.01, 0.1, 0.15, 0.2]:
+for density in [0.05, 0.1, 0.15, 0.2]:
 
     # 1
     type_ = "rt"
     latent_dim = 8
-    lr = 0.001
+    lr = 0.0001
     lambda_ = 0.1
     epochs = 1000
 
@@ -39,13 +41,8 @@ for density in [0.01, 0.1, 0.15, 0.2]:
     server = Server(md_data.col_n, latent_dim)
 
     mf = FedMF(server, clients)
-    # mf.fit(epochs, lambda_, lr, test_data, scaler=md_data.scaler)
-    y, y_pred = mf.predict(
-        test_data,
-        True,
-        "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/result/FedMF/epoch_1000_mae_0.4648_users_vec.npy",
-        "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/result/FedMF/epoch_1000_mae_0.4648_items_vec.npy",
-    )
+    mf.fit(epochs, lambda_, lr, test_data, scaler=md_data.scaler)
+    y, y_pred = mf.predict(test_data, False)
 
     mae_ = mae(y, y_pred)
     mse_ = mse(y, y_pred)

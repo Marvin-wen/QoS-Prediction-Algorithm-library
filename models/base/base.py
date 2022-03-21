@@ -99,6 +99,7 @@ class ModelBase(object):
                             ckpt = {}
                         save_checkpoint(ckpt, is_best, f"output/{self.name}",
                                         f"{save_filename}_loss-{best_loss:.4f}.ckpt")
+                        
 
                 elif save_model:
                     ckpt = {

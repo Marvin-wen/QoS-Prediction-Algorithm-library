@@ -10,6 +10,9 @@ from .model import NMFModel
 
 """
 RESULT NMF:
+Density:0.05, type:rt, latent_dim:  8, epochs: 200, mae:0.6715, mse:2.3325, rmse:1.5272
+Density:0.10, type:rt, latent_dim:  8, epochs: 200, mae:0.5599, mse:1.9375, rmse:1.3919
+Density:0.15, type:rt, latent_dim:  8, epochs: 200, mae:0.5094, mse:1.7087, rmse:1.3072
 """
 
 freeze_random()  # 冻结随机数 保证结果一致
@@ -37,8 +40,8 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     #         logger.info(
     #             f"Density:{density:.02f}, type:{type_}, latent_dim:{latent_dim:{3}}, epochs:{epochs:{4}}, mae:{mae_:.04f}, mse:{mse_:.04f}, rmse:{rmse_:.04f}")
 
-    latent_dim = 12
-    epochs = 1000
+    latent_dim = 8
+    epochs = 200
     nmf = NMFModel(md_data.row_n, md_data.col_n, latent_dim)
     nmf.fit(train_data, test_data, epochs, verbose=True, normalize=False,early_stop=True)
     y, y_pred = nmf.predict(test_data)

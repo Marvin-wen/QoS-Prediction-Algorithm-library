@@ -33,7 +33,7 @@ class FedMF(object):
             # server upgrade
             self.server.upgrade(lr, gradient_from_user)
 
-            if (epoch + 1) % 2 == 0:
+            if (epoch + 1) % 200 == 0:
                 y_list, y_pred_list = self.predict(test_triad, scaler=scaler)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)

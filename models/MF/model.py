@@ -6,6 +6,7 @@ from utils.evaluation import mae, mse, rmse
 
 
 class MFModel(object):
+
     def __init__(self, n_user, n_item, latent_dim, lr, lambda_) -> None:
         super().__init__()
         self.lr = lr
@@ -19,10 +20,20 @@ class MFModel(object):
     def _init_vec(self):
         """初始化用户和物品的特征矩阵
         """
-        self.user_vec = 2 * np.random.random(
-            (self.n_user, self.latent_dim)) - 1
-        self.item_vec = 2 * np.random.random(
-            (self.n_item, self.latent_dim)) - 1
+        # self.user_vec = 2 * np.random.random(
+        #     (self.n_user, self.latent_dim)) - 1
+        # self.item_vec = 2 * np.random.random(
+        #     (self.n_item, self.latent_dim)) - 1
+
+        # self.user_vec = 2 * np.random.random(
+        #     (self.n_user, self.latent_dim)) - 1
+        # self.item_vec = 2 * np.random.random(
+        #     (self.n_item, self.latent_dim)) - 1
+
+        self.user_vec = np.random.normal(0, 0.1,
+                                         (self.n_user, self.latent_dim))
+        self.item_vec = np.random.normal(0, 0.1,
+                                         (self.n_item, self.latent_dim))
 
     def fit(self, triad, test, epochs=100, verbose=True, early_stop=True):
         if not self.user_vec and not self.item_vec:
@@ -39,11 +50,11 @@ class MFModel(object):
                 y_pred = self.user_vec[user_idx] @ self.item_vec[item_idx].T
                 e_ui = y - y_pred
                 # 计算用户梯度
-                user_grad = -2 * e_ui * self.item_vec[
-                    item_idx] + 2 * self.lambda_ * self.user_vec[user_idx]
+                user_grad = -1 * e_ui * self.item_vec[
+                    item_idx] + 1 * self.lambda_ * self.user_vec[user_idx]
                 # 计算物品梯度
-                item_grad = -2 * e_ui * self.user_vec[
-                    user_idx] + 2 * self.lambda_ * self.item_vec[item_idx]
+                item_grad = -1 * e_ui * self.user_vec[
+                    user_idx] + 1 * self.lambda_ * self.item_vec[item_idx]
                 # 梯度更新
                 self.user_vec[user_idx] -= self.lr * user_grad
                 self.item_vec[item_idx] -= self.lr * item_grad

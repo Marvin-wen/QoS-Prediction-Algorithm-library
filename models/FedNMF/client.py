@@ -5,7 +5,6 @@ from tqdm import tqdm
 
 
 class Client(object):
-
     def __init__(self, triad, uid, user_vec) -> None:
         super().__init__()
         self.triad = triad
@@ -13,7 +12,7 @@ class Client(object):
         self.n_item = len(triad)
         self.user_vec = user_vec
 
-    def fit(self, items_vec, lambda_, lr):
+    def fit(self, items_vec, lr):
         l = []
         # 1. 获取服务端传过来的物品特征矩阵
         for row in self.triad:
@@ -22,24 +21,23 @@ class Client(object):
             y_pred = self.user_vec @ items_vec[iid].T
             e_ui = rate - y_pred
             # 2. 根据物品特征矩阵计算用户和物品梯度
-            user_grad = -2 * e_ui * items_vec[iid] + 2 * lambda_ * self.user_vec
-            item_grad = -2 * e_ui * self.user_vec + 2 * lambda_ * items_vec[iid]
+            user_grad = -1 * e_ui * items_vec[iid]
+            item_grad = -1 * e_ui * user_grad
             # 3. 用户梯度更新用户特征矩阵
             self.user_vec -= lr * user_grad
+            self.user_vec[self.user_vec < 0] = 0
             # 4. 物品梯度返回
             l.append([iid, item_grad])
         return l
 
 
 class Clients(object):
-
     def __init__(self, triad, n_user, latent_dim) -> None:
         super().__init__()
         self.triad = triad
         self.clients_map = {}
         # self.users_vec = 2 * np.random.random((n_user, latent_dim)) - 1
-        self.users_vec = np.random.normal(0, 0.1, (n_user, latent_dim))
-
+        self.users_vec = np.random.random((n_user, latent_dim))
         self._get_clients()
 
     def _get_clients(self):

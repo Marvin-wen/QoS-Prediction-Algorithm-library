@@ -12,7 +12,12 @@ class NMFModel(object):
     """Non-negative Matrix Factorization Model
     """
 
-    def __init__(self, n_user, n_item, latent_dim) -> None:
+    def __init__(self,
+                 n_user,
+                 n_item,
+                 latent_dim,
+                 lr=0.001,
+                 lambda_=0.1) -> None:
         super().__init__()
         self.n_user = n_user
         self.n_item = n_item
@@ -21,6 +26,8 @@ class NMFModel(object):
         self.item_matrix = None  # 项目特征矩阵
         self.matrix = None  # 真实矩阵
         self._nan_symbol = -1
+        self.lr = lr
+        self.lambda_ = lambda_
 
     def _init_matrix(self, triad):
         """初始化用户和项目的特征矩阵
@@ -29,7 +36,7 @@ class NMFModel(object):
         # self.item_matrix = 2 * np.random.random((self.latent_dim, self.n_item)) - 1
 
         self.user_matrix = np.random.random((self.n_user, self.latent_dim))
-        self.item_matrix = np.random.random((self.latent_dim, self.n_item))
+        self.item_matrix = np.random.random((self.n_item, self.latent_dim))
         self.matrix = triad_to_matrix(triad, self._nan_symbol)
         self.matrix[self.matrix == self._nan_symbol] = 0
 
@@ -76,15 +83,28 @@ class NMFModel(object):
             tmp_user_matrix = copy.deepcopy(self.user_matrix)
             tmp_item_matrix = copy.deepcopy(self.item_matrix)
 
-            up_W = self.matrix @ self.item_matrix.T
-            down_W = self.user_matrix @ self.item_matrix @ self.item_matrix.T
+            for row in triad:
+                user_idx, item_idx, y = int(row[0]), int(row[1]), float(row[2])
+                y_pred = self.user_matrix[user_idx] @ self.item_matrix[
+                    item_idx].T
+                e_ui = y - y_pred
 
-            self.user_matrix = self.user_matrix * up_W / down_W
+                user_grad = -1 * e_ui * self.item_matrix[item_idx]
+                self.user_matrix[user_idx] -= self.lr * user_grad
+                self.user_matrix[user_idx][self.user_matrix[user_idx] < 0] = 0
+                item_grad = -1 * e_ui * self.user_matrix[user_idx]
+                self.item_matrix[item_idx] -= self.lr * item_grad
+                self.item_matrix[item_idx][self.item_matrix[item_idx] < 0] = 0
 
-            up_H = self.user_matrix.T @ self.matrix
-            down_H = self.user_matrix.T @ self.user_matrix @ self.item_matrix
+            # up_W = self.matrix @ self.item_matrix.T
+            # down_W = self.user_matrix @ self.item_matrix @ self.item_matrix.T
 
-            self.item_matrix = self.item_matrix * up_H / down_H
+            # self.user_matrix = self.user_matrix * up_W / down_W
+
+            # up_H = self.user_matrix.T @ self.matrix
+            # down_H = self.user_matrix.T @ self.user_matrix @ self.item_matrix
+
+            # self.item_matrix = self.item_matrix * up_H / down_H
 
 
             if early_stop and np.mean(np.abs(self.user_matrix - tmp_user_matrix)) < 1e-4 and \
@@ -92,7 +112,7 @@ class NMFModel(object):
                 print('Converged')
                 break
 
-            if verbose and (epoch + 1) % 200 == 0:
+            if verbose and (epoch + 1) % 20 == 0:
                 y_list, y_pred_list = self.predict(test)
                 print(f"[{epoch}/{epochs}] MAE:{mae(y_list,y_pred_list):.5f}")
 
@@ -102,7 +122,7 @@ class NMFModel(object):
         y_list = []
         for row in tqdm(triad, desc='NMF Perdicting'):
             uid, iid, y = int(row[0]), int(row[1]), float(row[2])
-            y_pred = self.user_matrix[uid] @ self.item_matrix[:, iid]
+            y_pred = self.user_matrix[uid] @ self.item_matrix[iid].T
             y_pred_list.append(y_pred)
             y_list.append(y)
         return y_list, y_pred_list

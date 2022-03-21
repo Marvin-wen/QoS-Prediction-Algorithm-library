@@ -7,8 +7,8 @@ from data import ToTorchDataset
 from models.base import ClientBase, ClientsBase
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from utils.model_util import (nonzero_user_mean, split_d_traid, traid_to_matrix,
-                              use_optimizer)
+from utils.model_util import (nonzero_user_mean, split_d_triad,
+                              triad_to_matrix, use_optimizer)
 
 
 class Client(ClientBase):

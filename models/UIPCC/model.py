@@ -5,7 +5,7 @@ import numpy as np
 from scipy.stats import pearsonr
 from tqdm import tqdm
 from utils.model_util import (nonzero_item_mean, nonzero_user_mean,
-                              traid_to_matrix)
+                              triad_to_matrix)
 
 
 def cal_similarity_matrix(x, y):
@@ -146,13 +146,13 @@ class UIPCCModel(object):
             y_pred = i_mean
         return y_pred
 
-    def fit(self, traid):
+    def fit(self, triad):
         """训练模型
 
         Args:
-            traid (): 数据三元组: (uid, iid, rating)
+            triad (): 数据三元组: (uid, iid, rating)
         """
-        self.matrix = traid_to_matrix(traid, self._nan_symbol)  # 数据三元组转用户项目矩阵
+        self.matrix = triad_to_matrix(triad, self._nan_symbol)  # 数据三元组转用户项目矩阵
         self.u_mean = nonzero_user_mean(
             self.matrix, self._nan_symbol)  # 根据用户项目矩阵计算每个用户调用项目的QoS均值
         self.i_mean = nonzero_item_mean(
@@ -160,13 +160,13 @@ class UIPCCModel(object):
         self.similarity_user_matrix, self.similarity_item_matrix = self.get_similarity_matrix(
         )  # 获取用户相似度矩阵和项目相似度矩阵
 
-    def predict(self, traid, topk_u=-1, topk_i=-1, lamb=0.5):
+    def predict(self, triad, topk_u=-1, topk_i=-1, lamb=0.5):
         y_list = []  # 真实评分
         y_pred_list = []  # 预测评分
         cold_boot_cnt = 0  # 冷启动统计
         assert self.matrix is not None, "Please fit first e.g. model.fit()"
 
-        for row in tqdm(traid, desc="Predict... "):
+        for row in tqdm(triad, desc="Predict... "):
             uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
             # 冷启动: 新用户因为没有计算过相似用户, 因此无法预测评分, 新项目同理
             if uid + 1 > self.matrix.shape[0] or iid + 1 > self.matrix.shape[1]:
@@ -215,12 +215,12 @@ class UIPCCModel(object):
             y_pred_list.append(y_pred)
             y_list.append(rate)
 
-        print(f"cold boot :{cold_boot_cnt / len(traid) * 100:4f}%")
+        print(f"cold boot :{cold_boot_cnt / len(triad) * 100:4f}%")
         return y_list, y_pred_list
 
 
 if __name__ == "__main__":
-    traid = np.array([
+    triad = np.array([
         [0, 0, 1],
         [0, 1, 3],
         [1, 0, 1],
@@ -234,5 +234,5 @@ if __name__ == "__main__":
     test = np.array([[0, 2, 3]])
 
     uipcc = UIPCCModel()
-    uipcc.fit(traid)
+    uipcc.fit(triad)
     uipcc.predict(test)

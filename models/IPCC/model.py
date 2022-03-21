@@ -2,7 +2,7 @@ import copy
 import math
 import numpy as np
 from tqdm import tqdm
-from utils.model_util import traid_to_matrix, nonzero_user_mean, nonzero_item_mean
+from utils.model_util import triad_to_matrix, nonzero_user_mean, nonzero_item_mean
 
 # 相似度计算库
 from scipy.stats import pearsonr
@@ -38,7 +38,8 @@ class IPCCModel(object):
                 col_j = _m[:, j]
                 nonzero_i = np.nonzero(col_i)[0]  # 非0元素对应的下标
                 nonzero_j = np.nonzero(col_j)[0]
-                intersect = np.intersect1d(nonzero_i, nonzero_j)  # 对项目i,j同时有评分的用户集合
+                intersect = np.intersect1d(nonzero_i,
+                                           nonzero_j)  # 对项目i,j同时有评分的用户集合
 
                 if len(intersect) == 0:
                     sim = 0
@@ -47,14 +48,18 @@ class IPCCModel(object):
                     try:
                         if metric == 'PCC':
                             # 如果一个项目的评分向量中所有值都相等，则无法计算皮尔逊相关系数
-                            if len(set(col_i[intersect])) == 1 or len(set(col_j[intersect])) == 1:
+                            if len(set(col_i[intersect])) == 1 or len(
+                                    set(col_j[intersect])) == 1:
                                 sim = 0
                             else:
-                                sim = pearsonr(col_i[intersect], col_j[intersect])[0]
+                                sim = pearsonr(col_i[intersect],
+                                               col_j[intersect])[0]
                         elif metric == 'COS':
-                            sim = cosine_similarity(col_i[intersect], col_j[intersect])
+                            sim = cosine_similarity(col_i[intersect],
+                                                    col_j[intersect])
                         elif metric == 'ACOS':
-                            sim = adjusted_cosine_similarity(col_i, col_j, intersect, self.u_mean)
+                            sim = adjusted_cosine_similarity(
+                                col_i, col_j, intersect, self.u_mean)
                     except Exception as e:
                         sim = 0
 
@@ -74,7 +79,8 @@ class IPCCModel(object):
 
         """
         assert isinstance(topk, int)
-        ordered_sim_iid = (-self.similarity_matrix[iid]).argsort()  # 按相似度从大到小排序后, 相似用户对应的索引
+        ordered_sim_iid = (
+            -self.similarity_matrix[iid]).argsort()  # 按相似度从大到小排序后, 相似用户对应的索引
         if topk == -1:
             return ordered_sim_iid
         else:
@@ -94,25 +100,28 @@ class IPCCModel(object):
 
         return self.similarity_matrix[iid_a][iid_b]
 
-    def fit(self, traid, metric='PCC'):
+    def fit(self, triad, metric='PCC'):
         """训练模型
 
         Args:
-            traid (): 数据三元组: (uid, iid, rating)
+            triad (): 数据三元组: (uid, iid, rating)
             metric (): 相似度计算方法, 可选参数: PCC(皮尔逊相关系数), COS(余弦相似度), ACOS(修正的余弦相似度)
         """
-        self.matrix = traid_to_matrix(traid, self._nan_symbol)  # 数据三元组转QoS矩阵
-        self.u_mean = nonzero_user_mean(self.matrix, self._nan_symbol)  # 根据QoS矩阵计算每个用户的评分均值
+        self.matrix = triad_to_matrix(triad, self._nan_symbol)  # 数据三元组转QoS矩阵
+        self.u_mean = nonzero_user_mean(self.matrix,
+                                        self._nan_symbol)  # 根据QoS矩阵计算每个用户的评分均值
         # FIXME 考虑i_mean为0的情况
-        self.i_mean = nonzero_item_mean(self.matrix, self._nan_symbol)  # 根据QoS矩阵计算每个项目的评分均值
-        self.similarity_matrix = self._get_similarity_matrix(self.matrix, metric)  # 根据QoS矩阵获取项目相似矩阵
+        self.i_mean = nonzero_item_mean(self.matrix,
+                                        self._nan_symbol)  # 根据QoS矩阵计算每个项目的评分均值
+        self.similarity_matrix = self._get_similarity_matrix(
+            self.matrix, metric)  # 根据QoS矩阵获取项目相似矩阵
 
-    def predict(self, traid, topK=-1):
+    def predict(self, triad, topK=-1):
         y_list = []  # 真实评分
         y_pred_list = []  # 预测评分
         cold_boot_cnt = 0  # 冷启动统计
 
-        for row in tqdm(traid, desc="Predict... "):
+        for row in tqdm(triad, desc="Predict... "):
             uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
             # 冷启动: 新用户因为没有计算过相似用户, 因此无法预测评分
             if iid + 1 > self.matrix.shape[1]:
@@ -129,7 +138,8 @@ class IPCCModel(object):
                 # 如果当前用户对相似项目没有评分，则不进行计算
                 if sim_item_rate == self._nan_symbol:
                     continue
-                up += similarity * (sim_item_rate - self.i_mean[sim_iid])  # 相似度 * (相似项目评分 - 相似项目评分均值)
+                up += similarity * (sim_item_rate - self.i_mean[sim_iid]
+                                    )  # 相似度 * (相似项目评分 - 相似项目评分均值)
                 down += similarity  # 相似度的绝对值
 
             if down != 0:
@@ -140,7 +150,7 @@ class IPCCModel(object):
             y_pred_list.append(y_pred)
             y_list.append(rate)
 
-        print(f"cold boot :{cold_boot_cnt / len(traid) * 100:4f}%")
+        print(f"cold boot :{cold_boot_cnt / len(triad) * 100:4f}%")
         return y_list, y_pred_list
 
 
@@ -161,7 +171,8 @@ def adjusted_cosine_similarity(x, y, intersect, u_mean):
     x = np.asarray(x)
     y = np.asarray(y)
 
-    multiply_sum = sum((x[i] - u_mean[i]) * (y[i] - u_mean[i]) for i in intersect)
+    multiply_sum = sum(
+        (x[i] - u_mean[i]) * (y[i] - u_mean[i]) for i in intersect)
     pow_sum_x = sum(math.pow(x[i] - u_mean[i], 2) for i in intersect)
     pow_sum_y = sum(math.pow(y[i] - u_mean[i], 2) for i in intersect)
 
@@ -169,7 +180,7 @@ def adjusted_cosine_similarity(x, y, intersect, u_mean):
 
 
 if __name__ == "__main__":
-    traid = np.array([
+    triad = np.array([
         [0, 0, 0],
         [0, 1, 0],
         [1, 0, 1],
@@ -183,5 +194,5 @@ if __name__ == "__main__":
     test = np.array([[0, 2, 3]])
 
     ipcc = IPCCModel()
-    ipcc.fit(traid)
+    ipcc.fit(triad)
     ipcc.predict(test, 20)

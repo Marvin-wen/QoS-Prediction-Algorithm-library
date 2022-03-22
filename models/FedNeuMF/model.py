@@ -1,76 +1,89 @@
+from pickletools import optimize
+from xmlrpc.client import Server
+
 import torch
-from models.base import FedModelBase
+import torch.nn.functional as F
+from models.base.fedbase import FedModelBase
+from models.FedGMF.client import Clients
 from torch import nn
 from tqdm import tqdm
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import load_checkpoint, save_checkpoint
 from utils.mylogger import TNLog
 
-from .client import Clients
-from .server import Server
 
-
-class FedMLP(nn.Module):
+class FedNeuMF(nn.Module):
     def __init__(self,
-                 n_user,
-                 n_item,
-                 dim,
-                 layers=[32, 16, 8],
+                 num_users,
+                 num_items,
+                 latent_dim,
+                 layers=None,
                  output_dim=1) -> None:
-        """
-        Args:
-            n_user ([type]): 用户数量
-            n_item ([type]): 物品数量
-            dim ([type]): 特征空间的维度
-            layers (list, optional): 多层感知机的层数. Defaults to [16,32,16,8].
-            output_dim (int, optional): 最后输出的维度. Defaults to 1.
-        """
-        super(FedMLP, self).__init__()
-        self.num_users = n_user
-        self.num_items = n_item
-        self.latent_dim = dim
+        super(FedNeuMF, self).__init__()
 
-        self.embedding_user = nn.Embedding(num_embeddings=self.num_users,
-                                           embedding_dim=self.latent_dim)
-        self.embedding_item = nn.Embedding(num_embeddings=self.num_items,
-                                           embedding_dim=self.latent_dim)
+        # GMF网络的embedding层
+        self.GMF_embedding_user = nn.Embedding(num_embeddings=num_users,
+                                               embedding_dim=latent_dim)
+        self.GMF_embedding_item = nn.Embedding(num_embeddings=num_items,
+                                               embedding_dim=latent_dim)
 
-        self.fc_layers = nn.ModuleList()
-        # MLP的第一层为latent vec的cat
-        self.fc_layers.append(nn.Linear(self.latent_dim * 2, layers[0]))
+        # MLP的embedding层
+        self.MLP_embedding_user = nn.Embedding(num_embeddings=num_users,
+                                               embedding_dim=latent_dim)
+        self.MLP_embedding_item = nn.Embedding(num_embeddings=num_items,
+                                               embedding_dim=latent_dim)
 
+        # MLP网络
+        self.MLP_layers = nn.ModuleList()
+        # MLP第一层，输入是用户特征向量 + 项目特征向量，因为假定特征空间维度都是 latemt_dim，因此输入维度大小为 2 * latemt_dim
+        self.MLP_layers.append(nn.Linear(latent_dim * 2, layers[0]))
         for in_size, out_size in zip(layers, layers[1:]):
-            self.fc_layers.append(nn.Linear(in_size, out_size))
+            self.MLP_layers.append(nn.Linear(in_size, out_size))
+        self.MLP_output = nn.Linear(layers[-1], latent_dim)
 
-        self.fc_output = nn.Linear(layers[-1], output_dim)
+        # 合并模型
+        self.linear = nn.Linear(2 * latent_dim, output_dim)
+        self.sigmoid = nn.Sigmoid()
 
-    def forward(self, user_idx, item_idx):
-        user_embedding = self.embedding_user(user_idx)
-        item_embedding = self.embedding_item(item_idx)
-        x = torch.cat([user_embedding, item_embedding], dim=-1)
-        for fc_layer in self.fc_layers:
-            x = fc_layer(x)
-            x = nn.ReLU()(x)
-        x = self.fc_output(x)
-        return x
+    def forward(self, user_indexes, item_indexes):
+        # GMF模型计算
+        GMF_user_embedding = self.GMF_embedding_user(user_indexes)
+        GMF_item_embedding = self.GMF_embedding_item(item_indexes)
+        # 点积
+        GMF_vec = torch.mul(GMF_user_embedding, GMF_item_embedding)
+
+        # MLP模型计算
+        MLP_user_embedding = self.MLP_embedding_user(user_indexes)
+        MLP_item_embedding = self.MLP_embedding_item(item_indexes)
+        # 隐向量堆叠
+        x = torch.cat([MLP_user_embedding, MLP_item_embedding], dim=-1)
+        # MLP网络
+        for layer in self.MLP_layers:
+            x = layer(x)
+            x = F.relu(x)
+        MLP_vec = self.MLP_output(x)
+
+        # 合并模型
+        vector = torch.cat([GMF_vec, MLP_vec], dim=-1)
+        linear = self.linear(vector)
+        output = self.sigmoid(linear)
+
+        return output
 
 
-class FedMLPModel(FedModelBase):
+class FedNeuMFModel(FedModelBase):
     def __init__(self,
                  triad,
                  loss_fn,
                  n_user,
                  n_item,
-                 dim,
-                 layers=[32, 16, 8],
-                 output_dim=1,
                  use_gpu=True,
                  optimizer="adam") -> None:
+        super().__init__()
         self.device = ("cuda" if
                        (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = __class__.__name__
-        self._model = FedMLP(n_user, n_item, dim, layers, output_dim)
-
+        self._model = FedNeuMF(loss_fn, n_user, n_item, use_gpu)
         self.server = Server()
         self.clients = Clients(triad, self._model, self.device)
 
@@ -82,11 +95,6 @@ class FedMLPModel(FedModelBase):
     def _check(self, iterator):
         assert abs(sum(iterator) - 1) <= 1e-4
 
-    def update_selected_clients(self, sampled_client_indices, lr, s_params):
-        return super().update_selected_clients(sampled_client_indices, lr,
-                                               s_params)
-
-    # todo how to add loss?
     def fit(self, epochs, lr, test_triad, fraction=1):
         best_train_loss = None
         is_best = False

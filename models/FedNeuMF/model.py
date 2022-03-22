@@ -1,15 +1,16 @@
 from pickletools import optimize
-from xmlrpc.client import Server
 
 import torch
 import torch.nn.functional as F
 from models.base.fedbase import FedModelBase
-from models.FedGMF.client import Clients
 from torch import nn
 from tqdm import tqdm
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import load_checkpoint, save_checkpoint
 from utils.mylogger import TNLog
+
+from .client import Clients
+from .server import Server
 
 
 class FedNeuMF(nn.Module):
@@ -77,13 +78,15 @@ class FedNeuMFModel(FedModelBase):
                  loss_fn,
                  n_user,
                  n_item,
+                 dim,
+                 layers=None,
                  use_gpu=True,
                  optimizer="adam") -> None:
         super().__init__()
         self.device = ("cuda" if
                        (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = __class__.__name__
-        self._model = FedNeuMF(loss_fn, n_user, n_item, use_gpu)
+        self._model = FedNeuMF(n_user, n_item, dim, layers)
         self.server = Server()
         self.clients = Clients(triad, self._model, self.device)
 

@@ -40,7 +40,7 @@ for density in [0.05, 0.1, 0.15, 0.2]:
         rt_data.row_n,
         rt_data.col_n,
         dim=8,
-        layers=[64,32,8],
+        layers=[64, 32, 8],
     )
 
     neumf.fit(epochs, lr, test_dataloader)

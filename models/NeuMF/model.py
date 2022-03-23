@@ -61,12 +61,13 @@ class NeuMF(nn.Module):
 class NeuMFModel(ModelBase):
     def __init__(self, loss_fn, num_users, num_items, latent_dim, layers=None, output_dim=1, use_gpu=True) -> None:
         super().__init__(loss_fn, use_gpu)
+        self.name = __class__.__name__
+
         if layers is None:
-            layers = [32, 16, 8]
+            layers = [32, 8]
         self.model = NeuMF(num_users, num_items, latent_dim, layers=layers, output_dim=output_dim)
         if use_gpu:
             self.model.to(self.device)
-        self.name = __class__.__name__
 
     def parameters(self):
         return self.model.parameters()

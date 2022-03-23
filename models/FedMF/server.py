@@ -7,8 +7,9 @@ class Server(object):
         super().__init__()
         self.n_item = n_item
         self.latent_dim = latent_dim
-        self.items_vec = 2 * np.random.random(
-            (self.n_item, self.latent_dim)) - 1
+        # self.items_vec = 2 * np.random.random(
+        #     (self.n_item, self.latent_dim)) - 1
+        self.items_vec = np.random.normal(0,0.1,(self.n_item,self.latent_dim))
 
     def upgrade(self, lr, gradient_from_user: list):
         """Server upgrades by user gradient

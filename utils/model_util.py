@@ -5,9 +5,7 @@ import shutil
 
 import numpy as np
 import torch
-import torch.nn.init as init
 from root import absolute
-from scipy.sparse.construct import rand
 from torch import nn
 """
     Some handy functions for model training ...
@@ -49,52 +47,61 @@ def use_cuda(enabled, device_id=0):
 
 
 def freeze_random(seed=2021):
-
     torch.cuda.manual_seed(seed)
     torch.manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
 
 
-def traid_to_matrix(traid, nan_symbol=-1):
+def triad_to_matrix(triad, nan_symbol=-1):
     """三元组转矩阵
 
     Args:
-        traid : 三元组
+        triad : 三元组
         nan_symbol : 非零数据的表示方法. Defaults to -1.
 
     """
     # 注意下标应该为int
-    if not isinstance(traid, np.ndarray):
-        traid = np.array(traid)
-    x_max = traid[:, 0].max().astype(int)
-    y_max = traid[:, 1].max().astype(int)
-    matrix = np.full((x_max + 1, y_max + 1), nan_symbol, dtype=traid.dtype)
-    matrix[traid[:, 0].astype(int), traid[:, 1].astype(int)] = traid[:, 2]
+    if not isinstance(triad, np.ndarray):
+        triad = np.array(triad)
+    x_max = triad[:, 0].max().astype(int)  # 用户数量
+    y_max = triad[:, 1].max().astype(int)  # 项目数量
+    matrix = np.full((x_max + 1, y_max + 1), nan_symbol,
+                     dtype=triad.dtype)  # 初始化QoS矩阵
+    matrix[triad[:, 0].astype(int),
+           triad[:, 1].astype(int)] = triad[:, 2]  # 将评分值放到QoS矩阵的对应位置中
     return matrix
 
 
-def split_d_traid(d_traid):
-    l = np.array(d_traid, dtype=np.object)
+def split_d_triad(d_triad):
+    l = np.array(d_triad, dtype=np.object)
     return np.array(l[:, 0].tolist()), l[:, 1].tolist()
 
 
-def nonzero_mean(matrix, nan_symbol):
+def nonzero_user_mean(matrix, nan_symbol):
     """快速计算一个矩阵的行均值
     """
     m = copy.deepcopy(matrix)
     m[matrix == nan_symbol] = 0
-    t = (m != 0).sum(axis=-1)
-    return (m.sum(axis=-1) / t).squeeze()
+    t = (m != 0).sum(axis=-1)  # 每行非0元素的个数
+    res = (m.sum(axis=-1) / t).squeeze()
+    res[np.isnan(res)] = 0
+    return res
+
+
+def nonzero_item_mean(matrix, nan_symbol):
+    """快速计算一个矩阵的列均值
+    """
+    return nonzero_user_mean(matrix.T, nan_symbol)
 
 
 def use_optimizer(network, opt, lr):
     if opt == 'sgd':
-        optimizer = torch.optim.SGD(network.parameters(),
-                                    lr=lr,
-                                    momentum=0.99)
+        optimizer = torch.optim.SGD(network.parameters(), lr=lr, momentum=0.99)
     elif opt == 'adam':
-        optimizer = torch.optim.Adam(network.parameters(), lr=lr)
+        optimizer = torch.optim.Adam(network.parameters(),
+                                     lr=lr,
+                                     weight_decay=1e-8)
     return optimizer
 
 
@@ -162,11 +169,11 @@ def init_net(model, init_type, init_gain, gpu_ids):
 
 
 if __name__ == "__main__":
-    d_traid = [[[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
+    d_triad = [[[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
                [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
                [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]],
                [[1, 2, 3.2], [[1, 1], [2, 2], 3.2]]]
-    a, b = split_d_traid(d_traid)
-    t2m = traid_to_matrix(a)
+    a, b = split_d_triad(d_triad)
+    t2m = triad_to_matrix(a)
     print(t2m)
-    print(nonzero_mean(t2m, -1))
+    print(nonzero_user_mean(t2m, -1))

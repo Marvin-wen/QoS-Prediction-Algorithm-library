@@ -5,17 +5,18 @@ from tqdm import tqdm
 
 
 class Client(object):
-    def __init__(self, traid, uid, user_vec) -> None:
+
+    def __init__(self, triad, uid, user_vec) -> None:
         super().__init__()
-        self.traid = traid
+        self.triad = triad
         self.uid = uid
-        self.n_item = len(traid)
+        self.n_item = len(triad)
         self.user_vec = user_vec
 
     def fit(self, items_vec, lambda_, lr):
         l = []
         # 1. 获取服务端传过来的物品特征矩阵
-        for row in self.traid:
+        for row in self.triad:
             uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
             # 获得预测值
             y_pred = self.user_vec @ items_vec[iid].T
@@ -31,16 +32,19 @@ class Client(object):
 
 
 class Clients(object):
-    def __init__(self, traid, n_user, latent_dim) -> None:
+
+    def __init__(self, triad, n_user, latent_dim) -> None:
         super().__init__()
-        self.traid = traid
+        self.triad = triad
         self.clients_map = {}
-        self.users_vec = 2 * np.random.random((n_user, latent_dim)) - 1
+        # self.users_vec = 2 * np.random.random((n_user, latent_dim)) - 1
+        self.users_vec = np.random.normal(0, 0.1, (n_user, latent_dim))
+
         self._get_clients()
 
     def _get_clients(self):
         r = defaultdict(list)
-        for row in self.traid:
+        for row in self.triad:
             uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
             r[uid].append(row)
         for uid, rows in r.items():

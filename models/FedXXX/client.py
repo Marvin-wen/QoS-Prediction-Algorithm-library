@@ -8,30 +8,30 @@ from data import ToTorchDataset
 from models.base import ClientBase
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from utils.model_util import (nonzero_mean, split_d_traid, traid_to_matrix,
-                              use_optimizer)
+from utils.model_util import (nonzero_user_mean, split_d_triad,
+                              triad_to_matrix, use_optimizer)
 
 
 class Client(ClientBase):
     """客户端实体
     """
     def __init__(self,
-                 traid,
+                 triad,
                  uid,
                  device,
                  model,
                  batch_size=-1,
                  local_epochs=5) -> None:
         super().__init__(device, model)
-        self.traid = traid
+        self.triad = triad
         self.uid = uid
-        self.n_item = len(traid)
+        self.n_item = len(triad)
         self.local_epochs = local_epochs
         self.batch_size = self.n_item if batch_size == -1 else batch_size
-        self.data_loader = DataLoader(ToTorchDataset(self.traid),
+        self.data_loader = DataLoader(ToTorchDataset(self.triad),
                                       batch_size=self.batch_size,
                                       drop_last=True)
-        self.single_batch = DataLoader(ToTorchDataset(self.traid),
+        self.single_batch = DataLoader(ToTorchDataset(self.triad),
                                        batch_size=1,
                                        drop_last=True)
 
@@ -53,19 +53,19 @@ class Clients(object):
     """多client 的虚拟管理节点
     """
     def __init__(self,
-                 d_traid,
+                 d_triad,
                  model,
                  device,
                  batch_size=-1,
                  local_epochs=5) -> None:
         super().__init__()
-        self.traid, self.p_traid = split_d_traid(d_traid)
+        self.triad, self.p_triad = split_d_triad(d_triad)
         self.model = model
         self.device = device
         self.clients_map = {}  # 存储每个client的数据集
         self.clients_feature_map = OrderedDict()  # 存储每个client的feature
-        self.traid2matrix = traid_to_matrix(self.traid, -1)
-        self.u_mean = nonzero_mean(self.traid2matrix, -1)
+        self.triad2matrix = triad_to_matrix(self.triad, -1)
+        self.u_mean = nonzero_user_mean(self.triad2matrix, -1)
         self.batch_size = batch_size
         self.local_epochs = local_epochs
 
@@ -73,10 +73,10 @@ class Clients(object):
 
     def _get_clients(self):
         r = defaultdict(list)
-        for traid_row, p_traid_row in zip(self.traid, self.p_traid):
-            uid, iid, rate = int(traid_row[0]), int(traid_row[1]), float(
-                traid_row[2])
-            r[uid].append(p_traid_row)
+        for triad_row, p_triad_row in zip(self.triad, self.p_triad):
+            uid, iid, rate = int(triad_row[0]), int(triad_row[1]), float(
+                triad_row[2])
+            r[uid].append(p_triad_row)
         for uid, rows in tqdm(r.items(), desc="Building clients..."):
             self.clients_map[uid] = Client(rows,
                                            uid,
@@ -110,12 +110,13 @@ class Clients(object):
                 l.append(val.cpu().numpy())
                 cnt += 1
         l = np.array(l)
+        l = np.corrcoef(l)
         return l
 
     def _query(self, uid, iid, type_="rate"):
         try:
             if type_ == "rate":
-                return self.traid2matrix[uid][iid]
+                return self.triad2matrix[uid][iid]
             elif type_ == "mean":
                 return self.u_mean[uid]
         except Exception:

@@ -37,7 +37,7 @@ class Clients(object):
         self.triad = triad
         self.clients_map = {}
         # self.users_vec = 2 * np.random.random((n_user, latent_dim)) - 1
-        self.users_vec = np.random.random((n_user, latent_dim))
+        self.users_vec = np.random.normal(0,0.1,(n_user, latent_dim))
         self._get_clients()
 
     def _get_clients(self):

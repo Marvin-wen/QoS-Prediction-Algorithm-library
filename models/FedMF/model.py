@@ -19,7 +19,7 @@ class FedMF(object):
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
 
-    def fit(self, epochs, lambda_, lr, test_triad, scaler=None):
+    def fit(self, epochs, lambda_, lr, test_triad, interval=10, scaler=None):
         best_mae = None
         is_better = True
         for epoch in tqdm(range(epochs), desc="Epochs"):
@@ -33,7 +33,7 @@ class FedMF(object):
             # server upgrade
             self.server.upgrade(lr, gradient_from_user)
 
-            if (epoch + 1) % 200 == 0:
+            if (epoch + 1) % interval == 0:
                 y_list, y_pred_list = self.predict(test_triad, scaler=scaler)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)

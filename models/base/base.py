@@ -34,9 +34,9 @@ class ModelBase(object):
         save_dir = absolute(f"output/{self.name}/{self.date}/TensorBoard")
         os.makedirs(save_dir)
         self.writer = SummaryWriter(log_dir=save_dir)
-        tensorboard = program.TensorBoard()
-        tensorboard.configure(argv=[None, '--logdir', save_dir])
-        tensorboard.launch()
+        # tensorboard = program.TensorBoard()
+        # tensorboard.configure(argv=[None, '--logdir', save_dir])
+        # tensorboard.launch()
 
     def fit(self, train_loader, epochs, optimizer, eval_=True, eval_loader=None, save_model=True, save_filename=""):
         """Eval为True: 自动保存最优模型（推荐）, save_model为True: 间隔epoch后自动保存模型

@@ -16,8 +16,8 @@ for density in [0.05, 0.1, 0.15, 0.2]:
 
     # 1
     type_ = "rt"
-    latent_dim = 8
-    lr = 0.01
+    latent_dim = 12
+    lr = 0.000001
     epochs = 1000
 
     md_data = MatrixDataset(type_)

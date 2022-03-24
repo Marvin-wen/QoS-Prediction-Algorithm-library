@@ -6,7 +6,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from utils.evaluation import mae, mse, rmse
 from root import absolute
-from model import MLPModel
+from .model import MLPModel
 
 # 冻结随机数
 from utils.model_util import freeze_random

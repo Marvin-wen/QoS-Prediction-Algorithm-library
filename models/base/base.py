@@ -31,7 +31,7 @@ class ModelBase(object):
 
         # Tensorboard
         # 自动打开tensorboard，只要浏览器中打开localhost:6006即可看到训练过程
-        save_dir = absolute(f"output\\{self.name}\\{self.date}\\TensorBoard")
+        save_dir = absolute(f"output/{self.name}/{self.date}/TensorBoard")
         os.makedirs(save_dir)
         self.writer = SummaryWriter(log_dir=save_dir)
         tensorboard = program.TensorBoard()
@@ -62,6 +62,7 @@ class ModelBase(object):
             train_batch_loss = 0
             eval_total_loss = 0
             for batch_id, batch in enumerate(train_loader):
+
                 users, items, ratings = batch[0].to(self.device), batch[1].to(self.device), batch[2].to(self.device)
                 y_real = ratings.reshape(-1, 1)
                 self.optimizer.zero_grad()
